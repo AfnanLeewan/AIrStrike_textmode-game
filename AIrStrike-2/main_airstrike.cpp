@@ -72,7 +72,7 @@ int main()
 
 		}
 		clear_map();
-		//-----------------------------------------------------------------------------------------//GAMEPLAY
+		//-----------------------------------------------------------------------------------------//GAMEPLA
 		while (select == 1) {
 			if (wave.status == 0) { gotoxy(50, 15); setcolor(2, 0); printf("WAVE %d", wave.level); Sleep(2000);  gotoxy(50, 15); printf("         "); wave.status = 1; }
 			gotoxy(89, 4); setcolor(7, 0); printf("Score : %d", score);
