@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include<stdio.h> 
 #include<windows.h> 
 #include<time.h> 
@@ -6,16 +7,19 @@
 #include<time.h> 
 #include <thread>
 #include <mutex>
+#include <string.h>
+#include "ScoreBoard.h"
 struct player { int x = 45; int y = 65; int shield = 20; int stbullet[3] = { 0,0,0 }; int x_bullet[3]; int y_bullet[3]; int* bulletform = stbullet; char name[1000]; };
 struct Aenmemy { int x; int y; int shield = 3; int stbullet; int x_bullet; int y_bullet; int status; int Fr = 1; int mode = 0; };
 struct Hitem { int x; int y; int status = 0; int Fr = 1; }h;
 struct wave { int status = 0; int level = 1; int win = 0; }wave;
 player p;
 Aenmemy Aen[10];
-
+int scorewave1 = 50;
+int scorewave2 = 150;
 int score = 0, sheild = 20;
 void setcolor(int fg, int bg);
-void gotoxy(int x, int y);
+//void gotoxy(int x, int y);
 void clear_map();
 void draw_ship(int x, int y);
 void draw_bullet(int x, int y);
@@ -36,6 +40,7 @@ char cursor(int x, int y);
 void Aenemy(int x);
 void bullet_shoot(int x);
 void itemfall();
+void savescore(int x,char y);
 std::mutex mtx;
 int main()
 {
@@ -51,6 +56,7 @@ int main()
 
 	do {
 		draw_map();
+		clear_map();
 		while (select == 0) {
 
 
@@ -73,6 +79,7 @@ int main()
 		}
 		clear_map();
 		//-----------------------------------------------------------------------------------------//GAMEPLA
+		
 		while (select == 1) {
 			if (wave.status == 0) { gotoxy(50, 15); setcolor(2, 0); printf("WAVE %d", wave.level); Sleep(2000);  gotoxy(50, 15); printf("         "); wave.status = 1; }
 			gotoxy(89, 4); setcolor(7, 0); printf("Score : %d", score);
@@ -114,7 +121,7 @@ int main()
 				{
 					Aenemy(i);
 				}
-				if (score >= 50) { wave.status = 2; wave.win++; }
+				if (score >= scorewave1) { wave.status = 2; wave.win++; }
 				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
 			}
 			//------------------------------------------------wave2
@@ -123,7 +130,7 @@ int main()
 				{
 					Aenemy(i);
 				}
-				if (score >=150) { wave.status = 2; wave.win++; }
+				if (score >= scorewave2) { wave.status = 2; wave.win++; }
 				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
 			}
 			//------------------------------------------------wave3
@@ -235,15 +242,32 @@ int main()
 
 
 
-			if (p.shield <= 0) { gameover(15, 20); draw_kaboom(p.x, p.y); }
+			if (p.shield <= 0) {
+				gameover(18, 20);
+				gotoxy(47, 32); scanf("%s",p.name);
+				int len = strlen(p.name);
+				if (len <= 10) { ScoreBoard(p.name, score); select = 0; }
+				else
+				{
+					gotoxy(45, 35); printf("YOUR NAME IS TOO LONG !!!");
+					 gameover(18, 20);
+				}
+				 
+			}
 			//std::thread q(Beep, 700, 500);
 			//q.detach();
 
 			Sleep(10);
 
 		}
-		while (select == 2) { scoreboard(); }
-
+		while (select == 2) {
+			setcolor(7, 0); gotoxy(51, 28); printf("SCORE"); gotoxy(25, 20); Read(41, 30);; gotoxy(40, 40); printf("PRESS SPACEBAR TO BACK TO MENU ");
+			if (_kbhit()) {
+				char s;
+				s = _getch();
+				if (s == ' ') { select = 0; }
+			}
+		}
 
 
 
@@ -263,11 +287,13 @@ void setcolor(int fg, int bg)
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE); SetConsoleTextAttribute(hConsole, bg * 16 + fg);
 }
+/*
 void gotoxy(int x, int y)
 {
 	COORD c = { x, y };
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
 }
+*/
 void draw_ship(int x, int y)
 {
 	setcolor(1, 0);
@@ -397,9 +423,17 @@ void gameover(int x, int y) {
 	gotoxy(x, y++); printf("| | \\_  )| (   ) || |   | || (      | |   | | \\ \\_/ / | (      | (\\ (   ");
 	gotoxy(x, y++); printf("| (___) || )   ( || )   ( || (____/\\| (___) |  \\   /  | (____/\\| ) \\ \\_");
 	gotoxy(x, y++); printf("(_______)|/     \\||/     \\|(_______/(_______)   \\_/   (_______/|/   \\__/");
-	gotoxy(x += 10, y += 5); printf("enter your name");
-	gotoxy(x, y += 2); gets_s(p.name);
-
+	setcolor(2, 0);
+	gotoxy(45, 29); printf("---------------------");
+	gotoxy(45, 30); printf("|  enter your name  |");
+	gotoxy(45, 31); printf("|                   |");
+	gotoxy(45, 32); printf("|                   |");
+	gotoxy(45, 33); printf("---------------------");
+	
+	
+	
+	
+	
 
 }
 void startgame(int x, int y) {
@@ -567,4 +601,8 @@ void itemfall() {
 		}
 	}
 }
+void savescore(int x, char y) {
 
+
+
+}
