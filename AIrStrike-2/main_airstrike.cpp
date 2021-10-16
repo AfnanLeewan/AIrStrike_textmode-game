@@ -564,13 +564,16 @@ void Aenemy(int x) {
 	else { draw_bullet(Aen[x].x_bullet, ++Aen[x].y_bullet); }
 	*/
 
+	for (int i = 0; i < 3; i++)
+	{
+		if (p.x_bullet[i] >= Aen[x].x && p.x_bullet[i] <= Aen[x].x + 6 && p.y_bullet[i] == Aen[x].y + 1) {
 
-
-
-	if (p.x_bullet[0] >= Aen[x].x && p.x_bullet[0] <= Aen[x].x + 6 && p.y_bullet[0] == Aen[x].y + 1) {
-
-		std::thread q(Beep, 700, 500); q.detach(); Aen[x].shield--; clear_bullet(p.x_bullet[0], p.y_bullet[0]); p.stbullet[0] = 0; p.x_bullet[0] = NULL; p.y_bullet[0] = NULL;
+			std::thread q(Beep, 700, 500); q.detach(); Aen[x].shield--; clear_bullet(p.x_bullet[i], p.y_bullet[i]); p.stbullet[i] = 0; p.x_bullet[i] = NULL; p.y_bullet[i] = NULL;
+		}
 	}
+
+
+	
 	if (p.x == Aen[x].x && Aen[x].y == p.y) { std::thread q(Beep, 700, 500); q.detach(); p.shield -= 5; Aen[x].status = 0; clear_enemy(Aen[x].x, Aen[x].y); }
 	if (Aen[x].shield == 0) {/*std::thread q(draw_kaboom, Aen[x].x, Aen[x].y); q.detach(); */score += 10; clear_enemy(Aen[x].x, Aen[x].y); Aen[x].status = 0; Aen[x].shield = 3;  int i = rand() % 2; Aen[x].x = NULL;Aen[x].y=NULL;
 	if (i == 1 && h.status == 0) {
