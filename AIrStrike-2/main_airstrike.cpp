@@ -10,16 +10,20 @@
 #include <string.h>
 #include "ScoreBoard.h"
 struct player { int x = 45; int y = 65; int shield = 20; int stbullet[3] = { 0,0,0 }; int x_bullet[3]; int y_bullet[3]; int* bulletform = stbullet; char name[1000]; };
-struct Aenmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet = 0; int y_bullet = 0; int status; int Fr = 1; int mode = 0; int Fr_b = 1; };
-struct Benmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet = 0; int y_bullet = 0; int status; int Fr = 1; int mode = 0; };
-struct Hitem { int x; int y; int status = 0; int Fr = 1; }h;
+struct Aenmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet; int y_bullet; int status; int Fr = 1; int mode = 0; int Fr_b = 1; int drop=0; };
+struct Benmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet ; int y_bullet ; int status; int Fr = 1; int mode = 0; int Fr_b = 1; };
+struct Cenmemy { int x; int y; int shield = 5; int stbullet[3] = { 0,0,0 }; int x1_bullet; int y1_bullet; int x2_bullet; int y2_bullet; int x3_bullet; int y3_bullet; int status; int Fr = 1; int mode = 0; int Fr_b[3] = { 1,1,1 }; };
+struct Healing { int x; int y; int heal = 10; int status=0 ; };
 struct wave { int status = 0; int level = 1; int win = 0; }wave;
 player p;
 Aenmemy Aen[10];
 Benmemy Ben[10];
-int scorewave1 = 50;
+Cenmemy Cen[10];
+int scorewave1 = 100;
 int scorewave2 = 150;
 int scorewave3 = 250;
+int scorewave4 = 350;
+int scorewave5 = 450;
 int score = 0, sheild = 20;
 void setcolor(int fg, int bg);
 //void gotoxy(int x, int y);
@@ -32,8 +36,6 @@ void clear_ship(int x, int y);
 void clear_enemy(int x, int y);
 void setcursor(bool visible);
 void draw_map();
-void draw_itemH(int x,int y);
-void itemH();
 void clear_item(int x, int y);
 void draw_enemy(int x, int y);
 void draw_kaboom(int x, int y);
@@ -47,8 +49,12 @@ void ASenemy(int x);
 void bullet_shoot(int x);
 void enem_shoot(int x);
 void draw_Benemy(int x, int y);
+void draw_Cenemy(int x, int y);
+void Benemy(int x);
 void clear_Benemy(int x, int y);
 void Benemy(int x);
+void Cenemy(int x);
+void Cenem_shoot(int x);
 std::mutex mtx;
 int main()
 {
@@ -59,8 +65,6 @@ int main()
 
 	char ch = '.', menselect = '.', s = '.';
 	int  select = 0, mselect = 0;																						// 0=MENU 1=GAMEPLAY 2=SCORE 3=DEV NAME 4=PAUSE 5 =Gameover	
-	int px = 45, py = 65, pbullet[3] = { 0,0,0 }, pxbullet[3], pybullet[3], pshield = 20;										//player
-	int statAe[10] = { 0,0,0,0,0,0,0,0,0,0 }, Aex[10], Aey[10], ebullet[10] = { 0,0,0,0,0,0,0,0,0,0 }, exbullet[10], eybullet[10], eshield[10] = { 3,3,3,3,3,3,3,3,3,3 }, Fr1 = 1, Fr2 = 1, Fr3 = 1, Fr[10] = { 1,1,1,1,1,1,1,1,1,1 };				//enemy type A MAX 10 unit per window
 
 	do {
 		draw_map();
@@ -123,13 +127,21 @@ int main()
 			{
 				bullet_shoot(i);
 			}
+
+
 			//------------------------------------------------wave1
 			if (wave.level == 1) {
-				for (int i = 0; i < 10; i++)
+				for (int i = 0; i < 1; i++)
 				{
 					Aenemy(i);
-					if (rand()%3==0) { itemH(); }
-					
+					itemH(10,10);
+
+				}
+				if (score >= 50) {
+					for (int i = 5; i < 10; i++)
+					{
+						//enem_shoot(i);
+					}
 				}
 				if (score >= scorewave1) { wave.status = 2; wave.win++; }
 				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
@@ -177,105 +189,7 @@ int main()
 			//------------------------------------------------wave5
 
 	
-			if (h.y == p.y && h.x == p.x + 2) {
-				p.shield += 5; h.status = 0;	std::thread q(Beep, 700, 500); q.detach(); clear_item(h.x, h.y); h.x == NULL; h.y = NULL;
-			}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-			// if (p.x == h[0].x && p.y == h[0].y) { std::thread q(Beep, 900, 500); q.detach(); p.shield += 5; }
-
-
-
-
-
-
-			/*
-			if (p.stbullet[0] == 1) {
-				char bs1 = cursor(p.x_bullet[0], p.y_bullet[0] - 1);
-				clear_bullet(p.x_bullet[0], p.y_bullet[0]);
-
-				if (p.y_bullet[0] == 6) { p.stbullet[0] = 0; }
-				else if (bs1 != ' ') { p.stbullet[0] = 0; clear_bullet(p.x_bullet[0], pybullet[0]);}
-				else { draw_bullet(pxbullet[0], --pybullet[0]); }
-			}
-			if (pbullet[1] == 1) {
-
-				char bs1 = cursor(pxbullet[0], pybullet[0] - 1);
-				clear_bullet(pxbullet[1], pybullet[1]);
-				if (pybullet[1] == 6) { pbullet[1] = 0; }
-				else if (bs1 != ' ') { pbullet[0] = 0;  }
-				else { draw_bullet(pxbullet[1], --pybullet[1]); }
-			}
-			if (pbullet[2] == 1) {
-				char bs1 = cursor(pxbullet[0], pybullet[0] - 1);
-				clear_bullet(pxbullet[2], pybullet[2]);
-				if (pybullet[2] == 6) { pbullet[2] = 0; }
-				else if (bs1 != ' ') { pbullet[0] = 0;  }
-				else { draw_bullet(pxbullet[2], --pybullet[2]); }
-			}
-
-
-			if (statAe[0] == 0) { Aex[0] = 6 + rand() % 80; Aey[0] = 7 + rand() % 40; draw_enemy(Aex[0], Aey[0]); statAe[0] = 1; }
-			if (statAe[0] == 1) {
-				char bs1 = cursor(Aex[0], Aey[0] + 1);
-				clear_enemy(Aex[0], Aey[0]);
-				if (Aey[0] == 69) { statAe[0] = 0; }
-				else { if (Fr[0] != 10) { ++Fr[0]; draw_enemy(Aex[0], Aey[0]); } else {
-					if (Aex[0] < px) { ++Aex[0]; } if (Aex[0] > px) { --Aex[0]; }draw_enemy(Aex[0], ++Aey[0]); Fr[0] = 1; } }
-			}
-			if (pxbullet[0] >= Aex[0] && pxbullet[0] <= Aex[0] + 6 && pybullet[0] == Aey[0] + 1) {/* std::thread q(draw_kaboom, Aex[0], Aey[0]); q.detach();*//*score += 10; clear_enemy(Aex[0], Aey[0]); statAe[0] = 0; clear_bullet(pxbullet[0], pybullet[0]); pbullet[0] = 0; pxbullet[0] = NULL; pybullet[0] = NULL; }
-			if ( px == Aex[0] && Aey[0] == py) {std::thread q(Beep, 700, 500);q.detach(); pshield -= 5; statAe[0] = 0; clear_enemy(Aex[0], Aey[0]); }
-
-
-
-
-
-			if (statAe[1] == 0) { Aex[1] = 6 + rand() % 80; Aey[1] = 7 + rand() % 40; draw_enemy(Aex[1], Aey[1]); statAe[1] = 1; }
-			if (statAe[1] == 1) {
-				char bs1 = cursor(Aex[1], Aey[1] + 1);
-				clear_enemy(Aex[1], Aey[1]);
-				if (Aey[1] == 69) { statAe[1] = 0; }
-				else {
-					if (Fr2 != 10) { ++Fr2; draw_enemy(Aex[1], Aey[1]); }
-					else {
-						if (Aex[1] < px) { ++Aex[1]; } if (Aex[1] > px) { --Aex[1]; }draw_enemy(Aex[1], ++Aey[1]); Fr2 = 1;
-					}
-				}
-			}
-			if (pxbullet[0] >= Aex[1] && pxbullet[0] <= Aex[1] + 6 && pybullet[0] == Aey[1] + 1) {  /*std::thread q(draw_kaboom, Aex[1], Aey[1]); q.detach();*//* score += 10; clear_enemy(Aex[1], Aey[1]); statAe[1] = 0; clear_bullet(pxbullet[0], pybullet[0]); pbullet[0] = 0; pxbullet[0] = NULL; pybullet[0] = NULL; }
-			if (px == Aex[1] && Aey[1] == py) { std::thread q(Beep, 700, 500); q.detach(); pshield -= 5; statAe[1] = 0; clear_enemy(Aex[1], Aey[1]); }
-
-
-
-
-			if (statAe[2] == 0) { Aex[2] = 6 + rand() % 80; Aey[2] = 7 + rand() % 40; draw_enemy(Aex[2], Aey[2]); statAe[2] = 1; }
-			if (statAe[2] == 1) {
-				char bs1 = cursor(Aex[2], Aey[2] + 1);
-				clear_enemy(Aex[2], Aey[2]);
-				if (Aey[2] == 69) { statAe[2] = 0; }
-				else {
-					if (Fr3 != 10) { ++Fr3; draw_enemy(Aex[2], Aey[2]); }
-					else {
-						if (Aex[2] < px) { ++Aex[2]; } if (Aex[2] > px) { --Aex[1]; }draw_enemy(Aex[2], ++Aey[2]); Fr3 = 1;
-					}
-				}
-			}
-			if (pxbullet[0] >= Aex[2] && pxbullet[0] <= Aex[2] + 6 && pybullet[0] == Aey[2] + 1) { /*std::thread q(draw_kaboom, Aex[2], Aey[2]); q.detach();*//* score += 10; clear_enemy(Aex[2], Aey[2]); statAe[2] = 0; clear_bullet(pxbullet[0], pybullet[0]); pbullet[0] = 0; pxbullet[0] = NULL; pybullet[0] = NULL; }
-			if (px == Aex[2] && Aey[2] == py) { std::thread q(Beep, 700, 500); q.detach(); pshield -= 5; statAe[2] = 0; clear_enemy(Aex[2], Aey[2]); }
-
-			*/
 
 
 
@@ -408,35 +322,12 @@ void draw_map() {
 	}
 
 }
-void draw_itemH(int x,int y){
-	setcolor(2, 0); gotoxy(x, y); printf("|<H>|");
 
-}
 void clear_item(int x, int y) {
 	setcolor(2, 0);
 	gotoxy(x, y); printf("     ");
 }
-void itemH() {
-	
-	if (h.status == 0) { h.x = 7+ rand() % 40; h.y = 7; h.status = 1; }
-		if (h.status == 1) {
-			char bs1 = cursor(h.x, h.y - 1);
-			clear_item(h.x, h.y);
-			if (h.y == 69) { h.status = 0; }
-			else if (bs1 != ' ') { h.status = 0; clear_item(h.x, h.y); }
-			else {
-			
-				if (h.Fr == 30) { draw_itemH(h.x, ++h.y); h.Fr = 0; }
-				else { h.Fr++; draw_itemH(h.x, h.y);
-				}
-
-
-			}
-
-
-
-
-		}
+void itemH(int x,int y) {
 	
 }
 void draw_enbullet(int x, int y) {
@@ -455,6 +346,21 @@ void draw_enemy(int x, int y)
 	gotoxy(x, y); printf("<<+O+>>");
 
 }
+void draw_Cenemy(int x, int y) {
+	setcolor(14, 0);
+	gotoxy(x, y); printf("/~~~\\");
+	gotoxy(x, ++y); printf("\\-V-/");
+	
+
+}
+void clear_Cenemy(int x, int y) {
+	setcolor(8, 0);
+	gotoxy(x, y); printf("     ");
+	gotoxy(x, ++y); printf("     ");
+
+}
+
+
 void draw_kaboom(int x, int y) {
 	int i = y;
 	setcolor(2, 0);
@@ -628,7 +534,7 @@ void Aenemy(int x) {
 	
 	if (p.x == Aen[x].x && Aen[x].y == p.y) { std::thread q(Beep, 700, 500); q.detach(); p.shield -= 5; Aen[x].status = 0; clear_enemy(Aen[x].x, Aen[x].y); }
 	if (Aen[x].shield == 0) {
-		 /*std::thread q(draw_kaboom, Aen[x].x, Aen[x].y); q.detach(); */score += 10; clear_enemy(Aen[x].x, Aen[x].y); Aen[x].status = 0; Aen[x].shield = 3;  Aen[x].x = NULL; Aen[x].y = NULL;
+		/*std::thread q(draw_kaboom, Aen[x].x, Aen[x].y); q.detach(); */score += 10; clear_enemy(Aen[x].x, Aen[x].y); Aen[x].status = 0; Aen[x].shield = 3;  Aen[x].x = NULL; Aen[x].y = NULL;
 	}
 
 
@@ -709,11 +615,6 @@ void ASenemy(int x) {
 	}
 	if (p.x == Aen[x].x && Aen[x].y == p.y) { std::thread q(Beep, 700, 500); q.detach(); p.shield -= 5; Aen[x].status = 0; clear_enemy(Aen[x].x, Aen[x].y); }
 	if (Aen[x].shield == 0) {/*std::thread q(draw_kaboom, Aen[x].x, Aen[x].y); q.detach(); */score += 10; clear_enemy(Aen[x].x, Aen[x].y); Aen[x].status = 0; Aen[x].shield = 3;  int i = rand() % 2; Aen[x].x = NULL; Aen[x].y = NULL;
-	if (i == 1 && h.status == 0) {
-		h.status = 1;
-		h.x = Aen[x].x; h.y = Aen[x].y;
-		draw_itemH(h.x, h.y);
-	}
 	}
 
 
@@ -755,7 +656,7 @@ void bullet_shoot(int x) {
 
 
 void draw_Benemy(int x, int y) {
-	setcolor(5, 0);
+	setcolor(10, 0);
 	gotoxy(x, y);   printf("'   '");
 	gotoxy(x, ++y); printf("|.-.|");
 	gotoxy(x, ++y); printf(".'o'.");
@@ -766,9 +667,9 @@ void clear_Benemy(int x, int y) {
 	setcolor(5, 0);
 	gotoxy(x, y);   printf("     ");
 	gotoxy(x, ++y); printf("     ");
-	gotoxy(x, ++y); printf("     ");
-	gotoxy(x, ++y); printf("     ");
-	gotoxy(x, ++y); printf("     ");
+	gotoxy(x, ++y); printf("     ");					
+	gotoxy(x, ++y); printf("     ");						
+	gotoxy(x, ++y); printf("     ");						
 
 
 }
@@ -806,7 +707,7 @@ void Benemy(int x) {
 
 
 	if (p.x == Ben[x].x && Ben[x].y == p.y) { std::thread q(Beep, 700, 500); q.detach(); p.shield -= 5; Ben[x].status = 0; clear_Benemy(Ben[x].x, Ben[x].y); }
-	if (Ben[x].shield == 0) {/*std::thread q(draw_kaboom, Aen[x].x, Aen[x].y); q.detach(); */score += 10; clear_Benemy(Ben[x].x, Ben[x].y); Ben[x].status = 0; Ben[x].shield = 3;  Ben[x].x = NULL; Ben[x].y = NULL;
+	if (Ben[x].shield == 0) {/*std::thread q(draw_kaboom, Aen[x].x, Aen[x].y); q.detach(); */score += 20; clear_Benemy(Ben[x].x, Ben[x].y); Ben[x].status = 0; Ben[x].shield = 3;  Ben[x].x = NULL; Ben[x].y = NULL;
 
 	}
 
@@ -815,4 +716,90 @@ void Benemy(int x) {
 
 
 
+}
+void Cenemy(int x) {
+	if (Cen[x].status == 0 && wave.status == 1) {
+		Cen[x].x = 6 + rand() % 80; Cen[x].y = 7 + rand() % 10; draw_Cenemy(Cen[x].x, Cen[x].y); Cen[x].status = 1; Cen[x].mode = 1;//+ rand() % 3;
+	}
+
+
+	if (Cen[x].mode == 1) {
+		if (Cen[x].status == 1) {
+			char bs1 = cursor(Cen[x].x, Cen[x].y + 1);
+			clear_Cenemy(Cen[x].x, Cen[x].y);
+			if (Cen[x].y == 65) { Cen[x].status = 0; }
+			else {
+				if (Cen[x].Fr != 30) { ++Cen[x].Fr; draw_Cenemy(Cen[x].x, Cen[x].y); }
+				else {
+					draw_Cenemy(Cen[x].x, ++Cen[x].y); Cen[x].Fr = 1;
+				}
+			}
+		}
+	}
+
+
+
+
+	for (int i = 0; i < 3; i++)
+	{
+		if (p.x_bullet[i] >= Cen[x].x && p.x_bullet[i] <= Cen[x].x + 5 && p.y_bullet[i] == Cen[x].y) {
+
+			std::thread q(Beep, 700, 500); q.detach(); Cen[x].shield--; clear_bullet(p.x_bullet[i], p.y_bullet[i]); p.stbullet[i] = 0; p.x_bullet[i] = NULL; p.y_bullet[i] = NULL;
+		}
+	}
+
+
+
+	if (p.x == Cen[x].x && Cen[x].y == p.y) { std::thread q(Beep, 700, 500); q.detach(); p.shield -= 5; Cen[x].status = 0; clear_Cenemy(Cen[x].x, Cen[x].y); }
+	if (Cen[x].shield == 0) {/*std::thread q(draw_kaboom, Aen[x].x, Aen[x].y); q.detach(); */score += 30; clear_Cenemy(Cen[x].x, Cen[x].y); Cen[x].status = 0; Cen[x].shield = 5;  Cen[x].x = NULL; Cen[x].y = NULL;
+
+	}
+
+
+
+
+
+
+}
+void Cenem_shoot(int x) {
+	if (Cen[x].stbullet[0] == 0) { Cen[x].x1_bullet = Cen[x].x+2; Cen[x].y1_bullet = Cen[x].y+2; Cen[x].stbullet[0] = 1; }
+	clear_bullet(Cen[x].x1_bullet, Cen[x].y1_bullet);
+	if (Cen[x].y1_bullet == 69) { Cen[x].stbullet[0] = 0;  Cen[x].x1_bullet = Cen[x].x; Cen[x].y1_bullet = Cen[x].y; }
+	else {
+
+		if (Cen[x].Fr_b[0]!= 5) { Cen[x].Fr_b[0]++; draw_enbullet(Cen[x].x1_bullet, Cen[x].y1_bullet); }
+
+		else { draw_enbullet(Cen[x].x1_bullet, ++Cen[x].y1_bullet); Cen[x].Fr_b[0] = 1; }
+	}
+
+
+	if (Cen[x].stbullet[1] == 0) { Cen[x].x2_bullet = Cen[x].x + 2; Cen[x].y2_bullet = Cen[x].y + 2; Cen[x].stbullet[1] = 1; }
+	clear_bullet(Cen[x].x2_bullet, Cen[x].y2_bullet);
+	if (Cen[x].y2_bullet == 69||Cen[x].x2_bullet == 103) { Cen[x].stbullet[1] = 0;  Cen[x].x2_bullet = Cen[x].x; Cen[x].y2_bullet = Cen[x].y; }
+	else {
+
+		if (Cen[x].Fr_b[1] != 5) { Cen[x].Fr_b[1]++; draw_enbullet(Cen[x].x2_bullet, Cen[x].y2_bullet); }
+
+		else { draw_enbullet(++Cen[x].x2_bullet, ++Cen[x].y2_bullet); Cen[x].Fr_b[1] = 1; }
+	}
+
+
+	if (Cen[x].stbullet[2] == 0) { Cen[x].x3_bullet = Cen[x].x + 2; Cen[x].y3_bullet = Cen[x].y + 2; Cen[x].stbullet[2] = 1; }
+	clear_bullet(Cen[x].x3_bullet, Cen[x].y3_bullet);
+	if (Cen[x].y3_bullet == 69 || Cen[x].x3_bullet == 5) { Cen[x].stbullet[2] = 0;  Cen[x].x3_bullet = Cen[x].x; Cen[x].y3_bullet = Cen[x].y; }
+	else {
+
+		if (Cen[x].Fr_b[2] != 5) { Cen[x].Fr_b[2]++; draw_enbullet(Cen[x].x3_bullet, Cen[x].y3_bullet); }
+
+		else { draw_enbullet(--Cen[x].x3_bullet, ++Cen[x].y3_bullet); Cen[x].Fr_b[2] = 1; }
+	}
+
+
+
+
+
+
+	if (Cen[x].y1_bullet == p.y && Cen[x].x1_bullet >= p.x - 3 && Cen[x].x1_bullet <= p.x + 4) { p.shield -= 2; std::thread q(Beep, 700, 500); q.detach(); clear_bullet(Cen[x].x1_bullet, Cen[x].y1_bullet); Cen[x].stbullet[0] = 0; }
+	if (Cen[x].y2_bullet == p.y && Cen[x].x2_bullet >= p.x - 3 && Cen[x].x2_bullet <= p.x + 4) { p.shield -= 2; std::thread q(Beep, 700, 500); q.detach(); clear_bullet(Cen[x].x2_bullet, Cen[x].y2_bullet); Cen[x].stbullet[1] = 0; }
+	if (Cen[x].y3_bullet == p.y && Cen[x].x3_bullet >= p.x - 3 && Cen[x].x3_bullet <= p.x + 4) { p.shield -= 2; std::thread q(Beep, 700, 500); q.detach(); clear_bullet(Cen[x].x3_bullet, Cen[x].y3_bullet); Cen[x].stbullet[2] = 0; }
 }
