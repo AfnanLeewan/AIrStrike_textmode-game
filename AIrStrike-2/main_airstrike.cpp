@@ -38,6 +38,7 @@ int pselect = 1;
 void setcolor(int fg, int bg);
 //void gotoxy(int x, int y);
 void clear_map();
+void clear_game();
 void draw_ship(int x, int y);
 void draw_bullet(int x, int y);
 void draw_enbullet(int x,int y);
@@ -293,7 +294,7 @@ int main()
 					if (pselect == 1) { select = 1; }
 					else
 					{
-						select = 0;
+						select = 0; clear_game();
 					}
 				}
 			}
@@ -453,10 +454,7 @@ void draw_kaboom(int x, int y) {
 
 }
 void gameover(int x, int y) {
-	for (int i = 0; i < 10; i++) {
-		Aen[i].status = 2;
-		clear_enemy(Aen[i].x, Aen[i].y);
-	}
+
 	setcolor(4, 0);
 	gotoxy(x, y++); printf(" _______  _______  _______  _______  _______           _______  _______ ");
 	gotoxy(x, y++); printf("(  ____ \\(  ___  )(       )(  ____ \\(  ___  )|\\     /|(  ____ \\(  ____ )");
@@ -472,7 +470,7 @@ void gameover(int x, int y) {
 	gotoxy(45, 31); printf("|                   |");
 	gotoxy(45, 32); printf("|                   |");
 	gotoxy(45, 33); printf("---------------------");
-	
+	clear_game();
 	
 	
 	
@@ -939,6 +937,33 @@ void Cenemy(int x) {
 	clear_bullet(Cen[x].x2_bullet, Cen[x].y2_bullet);
 	clear_bullet(Cen[x].x3_bullet, Cen[x].y3_bullet);}
 	itemH(Cen[x].drop); Cen[x].drop = 0;
+
+
+}
+void clear_game() {
+	for (int i = 0; i < 10; i++) {
+		Aen[i].status = 0;
+		clear_enemy(Aen[i].x, Aen[i].y);
+	}
+	for (int i = 0; i < 10; i++) {
+		ASn[i].status = 0;
+		clear_enemy(ASn[i].x, ASn[i].y);
+	}
+	for (int i = 0; i < 10; i++) {
+		Ben[i].status = 0;
+		clear_enemy(Ben[i].x, Ben[i].y);
+	}
+	for (int i = 0; i < 10; i++) {
+		Cen[i].status = 0;
+		clear_enemy(Cen[i].x, Cen[i].y);
+	}
+	p.shield = 20;
+	score = 0;
+	wave.level = 1;
+	wave.status = 0;
+
+
+
 
 
 }
