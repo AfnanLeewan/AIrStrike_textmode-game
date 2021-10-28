@@ -9,14 +9,16 @@
 #include <mutex>
 #include <string.h>
 #include "ScoreBoard.h"
-struct player { int x = 45; int y = 65; int shield = 20; int stbullet[3] = { 0,0,0 }; int x_bullet[3]; int y_bullet[3]; int* bulletform = stbullet; char name[1000]; };
+struct player { int x = 45; int y = 65; int shield = 20; int stbullet[3] = { 0,0,0 }; int x_bullet[3]; int y_bullet[3]; int* bulletform = stbullet; char name[1000]; int ult = 0; };
 struct Aenmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet; int y_bullet; int status; int Fr = 1; int mode = 0; int Fr_b = 1; int drop = 0; int shoot; };
 struct ASenmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet; int y_bullet; int status; int Fr = 1; int mode = 0; int Fr_b = 1; int drop = 0; int shoot; };
 struct Benmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet ; int y_bullet ; int status; int Fr = 1; int mode = 0; int Fr_b = 1; int drop = 0; };
 struct Cenmemy { int x; int y; int shield = 5; int stbullet[3] = { 0,0,0 }; int x1_bullet; int y1_bullet; int x2_bullet; int y2_bullet; int x3_bullet; int y3_bullet; int status; int Fr = 1; int mode = 0; int Fr_b[3] = { 1,1,1 };  int drop = 0; int shoot = 0; };
+struct Item { int x; int y; int fr = 1; int ch = 0; int status = 0; int R=0; }Itm;
+struct item_Rocket { int stbullet = 0; int x_bullet; int y_bullet; int n = 0; }R;
 struct Healing { int x; int y; int heal = 5; int status = 0; int Fr = 1; }h;
 struct wave { int status = 0; int level = 1; int win = 0; }wave;
-struct enemy_wave { int score[5] = { 100,500,700,900,1100 }; 
+struct enemy_wave { int score[5] = { 1000,500,700,900,1100 }; 
 int An[5] = { 0,7,5,5,7 };
 int ASen[5]= { 5,5,5,5,7 };
 int Bn[5] = { 0,1,2,2,2 };
@@ -35,6 +37,7 @@ int scorewave4 = 350;
 int scorewave5 = 450;
 int score = 0, sheild = 20;
 int pselect = 1;
+
 void setcolor(int fg, int bg);
 //void gotoxy(int x, int y);
 void clear_map();
@@ -65,10 +68,12 @@ void clear_Benemy(int x, int y);
 void Benemy(int x);
 void Cenemy(int x);
 void Cenem_shoot(int x);
-void draw_itemH(int x,int y);
+void draw_item(int x,int y);
 void clear_item(int x, int y);
-void itemH(int x);
-
+void Item(int x);
+void draw_rocket(int x, int y);
+void clear_rocket(int x,int y);
+void Rocket();
 
 std::mutex mtx;
 int main()
@@ -135,6 +140,7 @@ int main()
 					else if (p.stbullet[1] == 0) { p.stbullet[1] = 1; p.x_bullet[1] = p.x + 4; p.y_bullet[1] = p.y - 1; }
 					else if (p.stbullet[2] == 0) { p.stbullet[2] = 1; p.x_bullet[2] = p.x + 4; p.y_bullet[2] = p.y - 1; }
 				}
+				if (ch == 'k' && R.stbullet == 0&&Itm.R==1) { R.stbullet = 1; R.x_bullet = p.x + 4; R.y_bullet = p.y - 1; }
 				fflush(stdin);
 
 			}
@@ -143,7 +149,7 @@ int main()
 			{
 				bullet_shoot(i);
 			}
-
+			Rocket();
 			
 
 
@@ -167,8 +173,6 @@ int main()
 				for (int i=0;i<ew.ASen[wave.level-1]; i++)
 				{
 					ASenemy(i);
-					//itemH(Aen[i].drop); Aen[i].drop = 0;
-					//enem_shoot(i);
 				}
 				for (int i = 0; i < ew.An[wave.level-1]; i++)
 				{
@@ -240,9 +244,53 @@ int main()
 				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
 			}
 			//------------------------------------------------wave4
+			if (wave.level == 4) {
 
+				for (int i = 0; i < ew.ASen[wave.level - 1]; i++)
+				{
+					ASenemy(i);
+				}
+				for (int i = 0; i < ew.An[wave.level - 1]; i++)
+				{
+					Aenemy(i);
+				}
+				for (int i = 0; i < ew.Bn[wave.level - 1]; i++)
+				{
+					Benemy(i);
+				}
+				for (int i = 0; i < ew.Cn[wave.level - 1]; i++)
+				{
+					Cenemy(i);
+				}
+
+
+				if (score >= ew.score[wave.level - 1]) { wave.status = 2; wave.win++; }
+				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
+			}
 			//------------------------------------------------wave5
-			
+			if (wave.level == 5) {
+
+				for (int i = 0; i < ew.ASen[wave.level - 1]; i++)
+				{
+					ASenemy(i);
+				}
+				for (int i = 0; i < ew.An[wave.level - 1]; i++)
+				{
+					Aenemy(i);
+				}
+				for (int i = 0; i < ew.Bn[wave.level - 1]; i++)
+				{
+					Benemy(i);
+				}
+				for (int i = 0; i < ew.Cn[wave.level - 1]; i++)
+				{
+					Cenemy(i);
+				}
+
+
+				if (score >= ew.score[wave.level - 1]) { wave.status = 2; wave.win++; }
+				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
+			}
 	
 
 
@@ -454,7 +502,7 @@ void draw_kaboom(int x, int y) {
 
 }
 void gameover(int x, int y) {
-
+	clear_game();
 	setcolor(4, 0);
 	gotoxy(x, y++); printf(" _______  _______  _______  _______  _______           _______  _______ ");
 	gotoxy(x, y++); printf("(  ____ \\(  ___  )(       )(  ____ \\(  ___  )|\\     /|(  ____ \\(  ____ )");
@@ -470,7 +518,7 @@ void gameover(int x, int y) {
 	gotoxy(45, 31); printf("|                   |");
 	gotoxy(45, 32); printf("|                   |");
 	gotoxy(45, 33); printf("---------------------");
-	clear_game();
+
 	
 	
 	
@@ -629,42 +677,54 @@ void Cenem_shoot(int x) {
 	if (Cen[x].y2_bullet == p.y && Cen[x].x2_bullet >= p.x - 3 && Cen[x].x2_bullet <= p.x + 4) { p.shield -= 2; std::thread q(Beep, 700, 500); q.detach(); clear_bullet(Cen[x].x2_bullet, Cen[x].y2_bullet); Cen[x].stbullet[1] = 0; }
 	if (Cen[x].y3_bullet == p.y && Cen[x].x3_bullet >= p.x - 3 && Cen[x].x3_bullet <= p.x + 4) { p.shield -= 2; std::thread q(Beep, 700, 500); q.detach(); clear_bullet(Cen[x].x3_bullet, Cen[x].y3_bullet); Cen[x].stbullet[2] = 0; }
 }
-void draw_itemH(int x,int y) {
-	setcolor(2, 0);
-	gotoxy(x, y); printf("|H|");
+void draw_item(int x,int y) {
+	
+	gotoxy(x, y);
+	if (Itm.ch == 0) { setcolor(2, 0);  printf("|H|"); }
+	if (Itm.ch == 1) { setcolor(3, 0);  printf("|R|"); }
+	if (Itm.ch == 2) { setcolor(4, 0);  printf("|C|"); }
+	if (Itm.ch == 3) { setcolor(5, 0);  printf("|M|"); }
+	if (Itm.ch == 4) { setcolor(6, 0);  printf("|X|"); }
 }
 void clear_item(int x, int y) {
 	setcolor(2, 0);
 	gotoxy(x, y); printf("    ");
 }
-void itemH(int x) {
+void Item(int x) {
 
 	if (x == 1) {
-		int i = rand() % 3;
+		
+		int i = 0;// rand() % 3;
 		gotoxy(10, 10); setcolor(2,0); printf("%d", i);
-		if (h.status == 0&&i==0) {
 
-			h.status = 1;
+		if (Itm.status == 0&&i==0) {
+			Itm.ch = 1;//rand() % 3;
+			Itm.status = 1;
 		}
 	}
-	if (h.status == 1) {
-			clear_item(h.x, h.y);
-			if (h.y == 65) { h.status = 0; }
+	gotoxy(15, 10); setcolor(2, 0); printf("%d %d", Itm.ch,R.stbullet);
+	if (Itm.status == 1) {
+
+			
+			clear_item(Itm.x, Itm.y);
+			if (Itm.y == 65) { Itm.status = 0; }
 			else {
-				if (h.Fr != 200) { ++h.Fr; draw_itemH(h.x, h.y); }
+				if (Itm.fr != 200) { ++Itm.fr; draw_item(Itm.x, Itm.y); }
 				else {
-					draw_itemH(h.x, ++h.y); h.Fr = 0;
+					draw_item(Itm.x, ++Itm.y); Itm.fr = 0;
 				}
 			}
-		}
-	
-	
-	if (h.y == p.y) {
-		p.shield += h.heal;
-		h.status = 0;
-		clear_item(h.x, h.y); 
-		h.x = NULL; h.y = NULL;
-	}
+			}
+			if (Itm.y == p.y) {
+				if (Itm.ch == 0) { p.shield += h.heal; }
+				if (Itm.ch == 1) { Itm.R = 1; gotoxy(19, 10); setcolor(2, 0); printf("%d", Itm.R);}
+				if (Itm.ch == 2) {}
+				if (Itm.ch == 3) {}
+				if (Itm.ch == 4) { p.ult++; }
+			Itm.status = 0;
+			clear_item(Itm.x, Itm.y); 
+			Itm.x = NULL; Itm.y = NULL;
+			}
 	
 
 
@@ -744,7 +804,7 @@ void Aenemy(int x) {
 
 		/*std::thread q(draw_kaboom, Aen[x].x, Aen[x].y); q.detach(); */score += 10; clear_enemy(Aen[x].x, Aen[x].y); Aen[x].status = 0; Aen[x].shield = 3;  Aen[x].x = NULL; Aen[x].y = NULL;
 	}
-	itemH(Aen[x].drop); Aen[x].drop = 0;
+	Item(Aen[x].drop); Aen[x].drop = 0;
 }
 void ASenemy(int x) {
 
@@ -813,10 +873,14 @@ void ASenemy(int x) {
 
 
 
+	if (R.x_bullet >= ASn[x].x && R.x_bullet <= ASn[x].x + 6 && R.y_bullet == ASn[x].y + 1) { ASn[x].shield = 0; }
+
+
+
 	if (p.x == ASn[x].x && ASn[x].y == p.y) { std::thread q(Beep, 700, 500); q.detach(); p.shield -= 5; ASn[x].status = 0; clear_enemy(ASn[x].x, ASn[x].y); }
 	if (ASn[x].shield == 0) {
 		ASn[x].drop = 1;
-		if (h.status == 0) { h.x = ASn[x].x; h.y = ASn[x].y; }
+		if (Itm.status == 0) { Itm.x = ASn[x].x; Itm.y = ASn[x].y; }
 		/*std::thread q(draw_kaboom, Aen[x].x, Aen[x].y); q.detach(); */score += 10; clear_enemy(ASn[x].x, ASn[x].y); ASn[x].status = 0; ASn[x].shield = 3;  ASn[x].x = NULL; ASn[x].y = NULL;
 	}
 
@@ -837,7 +901,7 @@ void ASenemy(int x) {
 	if (wave.status == 2) {
 		ASn[x].shoot = 0;   clear_bullet(ASn[x].x_bullet, ASn[x].y_bullet);
 	}
-	itemH(Aen[x].drop); Aen[x].drop = 0;
+	Item(ASn[x].drop); ASn[x].drop = 0;
 }
 void Benemy(int x) {
 		if (Ben[x].status == 0 && wave.status == 1) {
@@ -875,11 +939,11 @@ void Benemy(int x) {
 		if (p.x == Ben[x].x && Ben[x].y == p.y) { std::thread q(Beep, 700, 500); q.detach(); p.shield -= 5; Ben[x].status = 0; clear_Benemy(Ben[x].x, Ben[x].y); }
 		if (Ben[x].shield == 0) {
 			Ben[x].drop = 1;
-			if (h.status == 0) { h.x = Ben[x].x; h.y = Ben[x].y; }
+			if (Itm.status == 0) { Itm.x = Ben[x].x; Itm.y = Ben[x].y; }
 			/*std::thread q(draw_kaboom, Aen[x].x, Aen[x].y); q.detach(); */score += 20; clear_Benemy(Ben[x].x, Ben[x].y); Ben[x].status = 0; Ben[x].shield = 3;  Ben[x].x = NULL; Ben[x].y = NULL;
 
 		}
-		itemH(Ben[x].drop); Ben[x].drop = 0;
+		Item(Ben[x].drop); Ben[x].drop = 0;
 
 
 
@@ -936,7 +1000,7 @@ void Cenemy(int x) {
 	if (wave.status == 2) { Cen[x].shoot = 0;   clear_bullet(Cen[x].x1_bullet, Cen[x].y1_bullet);
 	clear_bullet(Cen[x].x2_bullet, Cen[x].y2_bullet);
 	clear_bullet(Cen[x].x3_bullet, Cen[x].y3_bullet);}
-	itemH(Cen[x].drop); Cen[x].drop = 0;
+	Item(Cen[x].drop); Cen[x].drop = 0;
 
 
 }
@@ -944,26 +1008,59 @@ void clear_game() {
 	for (int i = 0; i < 10; i++) {
 		Aen[i].status = 0;
 		clear_enemy(Aen[i].x, Aen[i].y);
+		Aen[i].stbullet = 0;
 	}
 	for (int i = 0; i < 10; i++) {
 		ASn[i].status = 0;
 		clear_enemy(ASn[i].x, ASn[i].y);
+		ASn[i].stbullet = 0;
 	}
 	for (int i = 0; i < 10; i++) {
 		Ben[i].status = 0;
 		clear_enemy(Ben[i].x, Ben[i].y);
+
 	}
 	for (int i = 0; i < 10; i++) {
 		Cen[i].status = 0;
 		clear_enemy(Cen[i].x, Cen[i].y);
+		Cen[i].stbullet[0] = 0;
+		Cen[i].stbullet[1] = 0;
+		Cen[i].stbullet[2] = 0;
 	}
 	p.shield = 20;
 	score = 0;
 	wave.level = 1;
-	wave.status = 0;
+	wave.status=0;
 
 
 
 
 
+}
+void draw_rocket(int x,int y ){
+	setcolor(5, 0);
+	gotoxy(x, y);   printf("/\\");
+	gotoxy(x, ++y); printf("||");
+	gotoxy(x, ++y); printf("MM");
+}
+void clear_rocket(int x, int y) {
+	setcolor(14, 0);
+	gotoxy(x, y);   printf("  ");
+	gotoxy(x, ++y); printf("  ");
+	gotoxy(x, ++y); printf("  ");
+}
+void Rocket() {
+
+	if (Itm.R == 1) {
+		if (R.stbullet == 1) {
+
+			clear_rocket(R.x_bullet, R.y_bullet);
+			if (R.y_bullet == 6) { R.stbullet = 0; R.n++; }
+			else { draw_rocket(R.x_bullet, --R.y_bullet); }
+
+		}
+		if (R.n == 3) { Itm.R = 0; R.stbullet = 0; R.n = 0; }
+
+
+	}
 }
