@@ -14,14 +14,15 @@ struct Aenmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet; i
 struct ASenmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet; int y_bullet; int status; int Fr = 1; int mode = 0; int Fr_b = 1; int drop = 0; int shoot; };
 struct Benmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet ; int y_bullet ; int status; int Fr = 1; int mode = 0; int Fr_b = 1; int drop = 0; };
 struct Cenmemy { int x; int y; int shield = 5; int stbullet[3] = { 0,0,0 }; int x1_bullet; int y1_bullet; int x2_bullet; int y2_bullet; int x3_bullet; int y3_bullet; int status; int Fr = 1; int mode = 0; int Fr_b[3] = { 1,1,1 };  int drop = 0; int shoot = 0; };
-struct Item { int x; int y; int fr = 1; int ch = 0; int status = 0; int R = 0; int C = 0; }Itm;
+struct Item { int x; int y; int fr = 1; int ch = 0; int status = 0; int R = 0; int C = 0; int M = 0; }Itm;
 struct item_Rocket { int stbullet = 0; int x_bullet; int y_bullet; int n = 0; }R;
-struct item_Cbullet { int stbullet = 0; int st_bullet[5] = {0,0,0,0,0}; int x_bullet[5]; int y_bullet[5]; int n = 0; }C;
+struct item_Cbullet { int stbullet = 0; int st_bullet[5] = { 0,0,0,0,0 }; int x_bullet[5]; int y_bullet[5]; int n = 20; int fr = 0; }C;
+struct item_copilot {int status =  0; int x; int y; int stbullet = 0; int x_bullet; int y_bullet;};
 struct Healing { int x; int y; int heal = 5; int status = 0; int Fr = 1; }h;
 struct wave { int status = 0; int level = 1; int win = 0; }wave;
 struct enemy_wave { int score[5] = { 100,500,700,900,1100 }; 
-int An[5] = { 5,7,5,5,7 };
-int ASen[5]= { 5,5,5,5,7 };
+int An[5] = { 1,7,5,5,7 };
+int ASen[5]= { 1,5,5,5,7 };
 int Bn[5] = { 0,1,2,2,2 };
 int Cn[5] = { 0,1,2,3,3 };
 }ew;
@@ -30,6 +31,7 @@ Aenmemy Aen[10];
 ASenmemy ASn[10];
 Benmemy Ben[10];
 Cenmemy Cen[10];
+item_copilot M[2];
 int playtime = 1;
 int scorewave1 = 300;
 int scorewave2 = 500;
@@ -38,7 +40,7 @@ int scorewave4 = 350;
 int scorewave5 = 450;
 int score = 0, sheild = 20;
 int pselect = 1;
-
+int shfr = 0;
 void setcolor(int fg, int bg);
 //void gotoxy(int x, int y);
 void clear_map();
@@ -76,6 +78,10 @@ void draw_rocket(int x, int y);
 void clear_rocket(int x,int y);
 void Rocket();
 void Cbullet();
+void draw_copilot(int x, int y);
+void copilot();
+void clear_copilot(int x, int y);
+
 
 std::mutex mtx;
 int main()
@@ -115,12 +121,12 @@ int main()
 		//-----------------------------------------------------------------------------------------//GAMEPLA
 		
 		while (select == 1) {
-			
+
 			if (wave.status == 0) { gotoxy(50, 15); setcolor(2, 0); printf("WAVE %d", wave.level); Sleep(2000);  gotoxy(50, 15); printf("         "); wave.status = 1; }
 			gotoxy(89, 4); setcolor(7, 0); printf("Score : %d", score);
 			gotoxy(8, 4); setcolor(7, 0);
 			printf("shield :%d", p.shield);
-			printf("                                                              ");
+
 			draw_ship(p.x, p.y);
 			for (int i = 0; i < p.shield; i++)
 			{
@@ -128,6 +134,10 @@ int main()
 				gotoxy(14 + i, 4);
 				printf(" ");
 			}
+			if (shfr == 20) {
+				shfr = 0; gotoxy(8, 4); setcolor(7, 0); printf("                                                              ");
+			}
+			else { shfr++; }
 			if (_kbhit()) {
 				ch = _getch();
 				if (ch == 'a' && p.x != 5) { clear_ship(p.x, p.y); draw_ship(--p.x, p.y); }
@@ -158,7 +168,7 @@ int main()
 			}
 			Rocket();
 			Cbullet();
-
+			copilot();
 
 
 
@@ -705,7 +715,7 @@ void Item(int x) {
 		gotoxy(10, 10); setcolor(2,0); printf("%d", i);
 
 		if (Itm.status == 0&&i==0) {
-			Itm.ch = 2;//rand() % 3;
+			Itm.ch = 3;//rand() % 3;
 			Itm.status = 1;
 		}
 	}
@@ -724,9 +734,9 @@ void Item(int x) {
 			}
 			if (Itm.y == p.y) {
 				if (Itm.ch == 0) { p.shield += h.heal; }
-				if (Itm.ch == 1) { Itm.R = 1; gotoxy(19, 10); setcolor(2, 0); printf("%d", Itm.R);}
-				if (Itm.ch == 2) { Itm.C = 1; gotoxy(19, 10); setcolor(2, 0); printf("%d", Itm.C);}
-				if (Itm.ch == 3) {}
+				if (Itm.ch == 1) { Itm.R = 1; Itm.C = 0; Itm.M = 0; gotoxy(19, 10); setcolor(2, 0); printf("%d", Itm.R); }
+				if (Itm.ch == 2) { Itm.C = 1; Itm.R = 0; Itm.M = 0; C.n = 20; gotoxy(19, 10); setcolor(2, 0); printf("%d", Itm.C); }
+				if (Itm.ch == 3) { Itm.C =  Itm.R = 0; Itm.M = 1; }
 				if (Itm.ch == 4) { p.ult++; }
 			Itm.status = 0;
 			clear_item(Itm.x, Itm.y); 
@@ -1134,7 +1144,7 @@ void Cbullet() {
 			if (C.st_bullet[2] == 1) {
 
 				clear_bullet(C.x_bullet[2], C.y_bullet[2]);
-				if (C.y_bullet[2] == 6 || C.x_bullet[3] == 7) { C.st_bullet[2] = 0; }
+				if (C.y_bullet[2] == 6 || C.x_bullet[2] == 7) { C.st_bullet[2] = 0; }
 				else { draw_bullet(--C.x_bullet[2], --C.y_bullet[2]); }
 
 			}
@@ -1156,8 +1166,61 @@ void Cbullet() {
 			}
 		}
 		if (C.st_bullet[0] == 0 && C.st_bullet[1] == 0 && C.st_bullet[2] == 0 && C.st_bullet[3] == 0 && C.st_bullet[4] == 0) { C.stbullet = 0; for (int i = 0; i < 5; i++) { C.st_bullet[i] = 1; } }
-		
 
+
+
+
+		
+		gotoxy(110, 10); setcolor(5, 0); printf("|C|");
+		gotoxy(115, 10); setcolor(0, 5); for (int i = 0; i < C.n; i++)
+		{
+			printf(" ");
+		}
+		if (C.fr == 20) { C.n--; C.fr = 0; gotoxy(105, 10); setcolor(5, 0); printf("                              "); }
+		else { C.fr++; }
+		if (C.n == 0) { Itm.C = 0; C.n = 20; }
+	}
+	gotoxy(22, 10); setcolor(5, 0); printf("%d", C.n);
+
+}
+
+void draw_copilot(int x, int y) {
+	gotoxy(x, y++); setcolor(5, 0); printf("      ");
+	gotoxy(x, y++); setcolor(5, 0); printf("  /\\ ");
+	gotoxy(x, y++); setcolor(5, 0); printf(" <  > ");
+	gotoxy(x, y++); setcolor(5, 0); printf(" /||\\ ");
+	gotoxy(x, y++); setcolor(5, 0); printf("       ");
+	
+}
+void clear_copilot(int x, int y) {
+	gotoxy(x, y++); setcolor(5, 0); printf("     ");
+	gotoxy(x, y++); setcolor(5, 0); printf("     ");
+	gotoxy(x, y++); setcolor(5, 0); printf("     ");
+
+}
+void copilot() {
+	if (Itm.M==1) {
+		M[0].x = p.x - 10; M[0].y = p.y;
+		M[1].x = p.x + 13; M[1].y = p.y;
+		setcolor(5, 0); draw_copilot(M[0].x, M[0].y);
+		setcolor(5, 0); draw_copilot(M[1].x, M[1].y);
+
+		for (int i = 0; i < 2; i++) {
+			if (M[i].stbullet == 0) { M[i].x_bullet = M[i].x; M[i].y_bullet = M[i].y; M[i].stbullet = 1; }
+			clear_bullet(M[i].x_bullet, M[i].y_bullet);
+			if (M[i].y_bullet == 7) { M[i].stbullet = 0;   M[i].x_bullet = M[i].x;  M[i].y_bullet = M[i].y; }
+			else {
+
+				 
+
+				draw_bullet(M[i].x_bullet, --M[i].y_bullet);
+			}
+
+		
+		}
 
 	}
+
+
+
 }
