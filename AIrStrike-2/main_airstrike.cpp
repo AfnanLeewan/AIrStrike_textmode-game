@@ -15,7 +15,7 @@ struct ASenmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet; 
 struct Benmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet ; int y_bullet ; int status; int Fr = 1; int mode = 0; int Fr_b = 1; int drop = 0; };
 struct Cenmemy { int x; int y; int shield = 5; int stbullet[3] = { 0,0,0 }; int x1_bullet; int y1_bullet; int x2_bullet; int y2_bullet; int x3_bullet; int y3_bullet; int status; int Fr = 1; int mode = 0; int Fr_b[3] = { 1,1,1 };  int drop = 0; int shoot = 0; };
 struct Item { int x; int y; int fr = 1; int ch = 0; int status = 0; int R = 0; int C = 0; int M = 0; }Itm;
-struct item_Rocket { int stbullet = 0; int x_bullet; int y_bullet; int n = 0; }R;
+struct item_Rocket { int stbullet = 0; int x_bullet; int y_bullet; int n = 0; int fr = 0;}R;
 struct item_Cbullet { int stbullet = 0; int st_bullet[5] = { 0,0,0,0,0 }; int x_bullet[5]; int y_bullet[5]; int n = 20; int fr = 0; }C;
 struct item_copilot { int status = 0; int x; int y; int stbullet = 0; int x_bullet; int y_bullet; int fr=0; int n = 20; };
 struct Healing { int x; int y; int heal = 5; int status = 0; int Fr = 1; }h;
@@ -25,6 +25,7 @@ int An[5] = { 5,7,5,5,7 };
 int ASen[5]= { 5,5,5,5,7 };
 int Bn[5] = { 0,1,2,2,2 };
 int Cn[5] = { 0,1,2,3,3 };
+
 }ew;
 player p;
 Aenmemy Aen[10];
@@ -41,6 +42,7 @@ int scorewave5 = 450;
 int score = 0, sheild = 20;
 int pselect = 1;
 int shfr = 0;
+int r = 2, m = 7;
 void setcolor(int fg, int bg);
 //void gotoxy(int x, int y);
 void clear_map();
@@ -101,18 +103,19 @@ int main()
 
 
 
-			setcolor(2, 0); gotoxy(43, 32); printf("press E to start game");
+			setcolor(2, 0); gotoxy(43, 32); printf("      Start game     ");
 			setcolor(2, 0); gotoxy(43, 33); printf("        score        ");
 			setcolor(2, 0); gotoxy(43, 34); printf("        EXIT         ");
+			setcolor(7, 0); gotoxy(43, 37); printf("PRESS SPACEBAR TO SELECT");
 			setcolor(3, 0); startgame(15, 20);
 			if (_kbhit()) {
 				s = _getch();
 				if (s == 's') { if (mselect != 3) { Beep(700, 100); mselect += 1; } }
 				if (s == 'w') { if (mselect != 1) { Beep(700, 100); mselect -= 1; } }
-				if (mselect == 1) { gotoxy(42, 32); setcolor(5, 0); printf(">");  gotoxy(42, 33); printf(" "); gotoxy(42, 34); printf(" "); }
-				if (mselect == 2) { gotoxy(42, 33); setcolor(5, 0); printf(">"); gotoxy(42, 32); printf(" "); gotoxy(42, 34); printf(" "); }
-				if (mselect == 3) { gotoxy(42, 34); setcolor(5, 0); printf(">"); gotoxy(42, 32); printf(" "); gotoxy(42, 33); printf(" "); }
-				if (s == ' ') { select = mselect; Beep(500, 100); Beep(500, 100);  Beep(700, 100);  break; }
+				if (mselect == 1) { gotoxy(42, 32); setcolor(7, 0); printf(">");  gotoxy(42, 33); printf(" "); gotoxy(42, 34); printf(" "); }
+				if (mselect == 2) { gotoxy(42, 33); setcolor(7, 0); printf(">"); gotoxy(42, 32); printf(" "); gotoxy(42, 34); printf(" "); }
+				if (mselect == 3) { gotoxy(42, 34); setcolor(7, 0); printf(">"); gotoxy(42, 32); printf(" "); gotoxy(42, 33); printf(" "); }
+				if (s == ' ') { select = mselect; Beep(500, 100); Beep(500, 100);  Beep(700, 100);  break; setcolor(10, 0); printf("      ", score); score = 0; Itm.C = 0; Itm.R = 0; Itm.M = 0; }
 				fflush(stdin);
 			}
 
@@ -123,6 +126,7 @@ int main()
 		while (select == 1) {
 
 			if (wave.status == 0) { gotoxy(50, 15); setcolor(2, 0); printf("WAVE %d", wave.level); Sleep(2000);  gotoxy(50, 15); printf("         "); wave.status = 1; }
+			gotoxy(89, 4); setcolor(7, 0); printf("                 ");
 			gotoxy(89, 4); setcolor(7, 0); printf("Score : %d", score);
 			gotoxy(8, 4); setcolor(7, 0);
 			printf("shield :%d", p.shield);
@@ -310,7 +314,43 @@ int main()
 			}
 	
 
+			while (select == 4) {
+				
+				setcolor(7, 0); gotoxy(43, 31); printf("----------------------");
+				setcolor(7, 0); gotoxy(43, 32); printf("|        PAUSE       | ");
+				setcolor(r, 0); gotoxy(43, 33); printf("|       RESUME       | ");
+				setcolor(m, 0); gotoxy(43, 34); printf("|      MAIN MANU     | ");
+				setcolor(7, 0); gotoxy(43, 35); printf("----------------------");
+			
 
+				if (_kbhit()) {
+					char q;
+					q = _getch();
+
+					if (q == 's') { if (pselect != 2) { Beep(700, 100); pselect += 1; } }
+					if (q == 'w') { if (pselect != 1) { Beep(700, 100); pselect -= 1; } }
+					if (pselect == 1) { r = 2; m = 7; } 
+					if (pselect == 2) { r = 7; m = 2; }
+					if (q == ' ') {
+						if (pselect == 1) { select = 1;		
+						setcolor(5, 0); gotoxy(40, 31); printf("                           ");
+						setcolor(5, 0); gotoxy(40, 32); printf("                           ");
+						setcolor(2, 0); gotoxy(40, 33); printf("                           ");
+						setcolor(2, 0); gotoxy(40, 34); printf("                           ");
+						setcolor(2, 0); gotoxy(40, 35); printf("                           ");
+
+						}
+						else
+						{
+							select = 0;
+						}
+					}
+				}
+
+
+
+
+			}
 
 
 			if (p.shield <= 0) {
@@ -320,6 +360,7 @@ int main()
 				if (len <= 10) { ScoreBoard(p.name, score); select = 0; }
 				else
 				{
+					
 					gotoxy(45, 35); printf("YOUR NAME IS TOO LONG !!!");
 					 gameover(18, 20);
 				}
@@ -340,34 +381,7 @@ int main()
 			}
 		}
 
-		while (select == 4) {
-			
-			setcolor(5, 0); gotoxy(43, 32); printf("        PAUSE        ");
-			setcolor(2, 0); gotoxy(43, 33); printf("       RESUME        ");
-			setcolor(2, 0); gotoxy(43, 34); printf("      MAIN MANU      ");
-			setcolor(2, 0); gotoxy(43, 35); printf("%d",pselect);
-			
-			if (_kbhit()) {
-				char q;
-				q = _getch();
-				
-				if (q == 's') { if (pselect != 2) { Beep(700, 100); pselect += 1; } }
-				if (q == 'w') { if (pselect != 1) { Beep(700, 100); pselect -= 1; } }
-				if (pselect == 1) { gotoxy(42, 33); setcolor(5, 0); printf(">");  gotoxy(42, 34); printf(" "); }
-				if (pselect == 2) { gotoxy(42, 34); setcolor(5, 0); printf(">"); gotoxy(42, 33); printf(" "); }
-				if (q == ' ') {
-					if (pselect == 1) { select = 1; }
-					else
-					{
-						select = 0; clear_game();
-					}
-				}
-			}
 
-
-
-
-		}
 
 
 
@@ -712,14 +726,14 @@ void Item(int x) {
 	if (x == 1) {
 		
 		int i = 0;// rand() % 3;
-		gotoxy(10, 10); setcolor(2,0); printf("%d", i);
+		
 
-		if (Itm.status == 0&&i==0) {
+		if (Itm.status == 0&&i==0&&Itm.x>15&&Itm.x<90) {
 			Itm.ch = rand() % 4;
 			Itm.status = 1;
 		}
 	}
-	gotoxy(15, 10); setcolor(2, 0); printf("%d %d", Itm.ch,R.stbullet);
+
 	if (Itm.status == 1) {
 
 			
@@ -734,8 +748,8 @@ void Item(int x) {
 			}
 			if (Itm.y == p.y) {
 				if (Itm.ch == 0) { p.shield += h.heal; }
-				if (Itm.ch == 1) { Itm.R = 1; Itm.C = 0; Itm.M = 0; gotoxy(19, 10); setcolor(2, 0); printf("%d", Itm.R); }
-				if (Itm.ch == 2) { Itm.C = 1; Itm.R = 0; Itm.M = 0; C.n = 20; gotoxy(19, 10); setcolor(2, 0); printf("%d", Itm.C); }
+				if (Itm.ch == 1) { Itm.R = 1; Itm.C = 0; Itm.M = 0; R.n = 0; gotoxy(110, 13);  }
+				if (Itm.ch == 2) { Itm.C = 1; Itm.R = 0; Itm.M = 0; C.n = 20;  }
 				if (Itm.ch == 3) { Itm.C = 0; Itm.R = 0; Itm.M = 1; }
 				if (Itm.ch == 4) { p.ult++; }
 			Itm.status = 0;
@@ -1126,7 +1140,7 @@ void clear_game() {
 
 }
 void draw_rocket(int x,int y ){
-	setcolor(5, 0);
+	setcolor(12, 0);
 	gotoxy(x, y);   printf("/\\");
 	gotoxy(x, ++y); printf("||");
 	gotoxy(x, ++y); printf("MM");
@@ -1147,10 +1161,20 @@ void Rocket() {
 			else { draw_rocket(R.x_bullet, --R.y_bullet); }
 
 		}
-		if (R.n == 3||Itm.R==0) { Itm.R = 0; R.stbullet = 0; R.n = 0; }
-
-
+		gotoxy(110, 13); setcolor(3, 0); printf("|R|");
+		gotoxy(113, 13); setcolor(3, 0); for (int i = 0; i < 3 - R.n; i++)
+		{
+			printf(" <O> ");
+		}
+		if (R.fr == 20) { R.fr = 0; gotoxy(110, 13); setcolor(0, 0); printf("                                "); }
+		else { R.fr++; }
 	}
+	if (R.n == 3 || Itm.R == 0) {
+		Itm.R = 0; R.stbullet = 0; R.n = 0; clear_rocket(R.x_bullet, R.y_bullet); R.y_bullet = NULL; R.x_bullet = NULL;
+		gotoxy(110, 13); setcolor(0, 0); printf("                            ");
+	
+	}
+
 }
 void Cbullet() {
 
@@ -1212,18 +1236,32 @@ void Cbullet() {
 		}
 		if (C.fr == 20) { C.n--; C.fr = 0; gotoxy(105, 10); setcolor(5, 0); printf("                              "); }
 		else { C.fr++; }
-		if (C.n == 0||Itm.C==0) { Itm.C = 0; C.n = 20; }
+		
 	}
-	gotoxy(22, 10); setcolor(5, 0); printf("%d", C.n);
+	if (C.n == 0 || Itm.C == 0) { Itm.C = 0; C.n = 20;
+	for (int i = 0; i < 5; i++)
+	{
+		clear_bullet(C.x_bullet[i], C.y_bullet[i]);
+		C.x_bullet[i] = NULL;
+		C.y_bullet[i] = NULL;
+	}
+	 gotoxy(105, 10); setcolor(5, 0); printf("                              "); 
+	
+	}
+
+
+
+
+	
 
 }
 
 void draw_copilot(int x, int y) {
-	gotoxy(x, y++); setcolor(5, 0); printf("      ");
-	gotoxy(x, y++); setcolor(5, 0); printf("  /\\ ");
-	gotoxy(x, y++); setcolor(5, 0); printf(" <  > ");
-	gotoxy(x, y++); setcolor(5, 0); printf(" /||\\ ");
-	gotoxy(x, y++); setcolor(5, 0); printf("       ");
+	gotoxy(x, y++); setcolor(12, 0); printf("      ");
+	gotoxy(x, y++); setcolor(12, 0); printf("  /\\ ");
+	gotoxy(x, y++); setcolor(12, 0); printf(" <  > ");
+	gotoxy(x, y++); setcolor(12, 0); printf(" /||\\ ");
+	gotoxy(x, y++); setcolor(12, 0); printf("       ");
 	
 }
 void clear_copilot(int x, int y) {
@@ -1234,24 +1272,24 @@ void clear_copilot(int x, int y) {
 
 }
 void copilot() {
-	if (Itm.M==1) {
+	if (Itm.M == 1) {
 		M[0].x = p.x - 10; M[0].y = p.y;
 		M[1].x = p.x + 13; M[1].y = p.y;
 		setcolor(5, 0); draw_copilot(M[0].x, M[0].y);
 		setcolor(5, 0); draw_copilot(M[1].x, M[1].y);
 
 		for (int i = 0; i < 2; i++) {
-			if (M[i].stbullet == 0) { M[i].x_bullet = M[i].x+3; M[i].y_bullet = M[i].y; M[i].stbullet = 1; }
+			if (M[i].stbullet == 0) { M[i].x_bullet = M[i].x + 3; M[i].y_bullet = M[i].y; M[i].stbullet = 1; }
 			clear_bullet(M[i].x_bullet, M[i].y_bullet);
 			if (M[i].y_bullet == 7) { M[i].stbullet = 0;   M[i].x_bullet = M[i].x;  M[i].y_bullet = M[i].y; }
 			else {
 
-				 
+
 
 				draw_bullet(M[i].x_bullet, --M[i].y_bullet);
 			}
 
-		
+
 		}
 		gotoxy(110, 11); setcolor(7, 0); printf("|M|");
 		gotoxy(115, 11); setcolor(0, 7); for (int i = 0; i < M[0].n; i++)
@@ -1260,16 +1298,18 @@ void copilot() {
 		}
 		if (M[0].fr == 20) { M[0].n--; M[0].fr = 0; gotoxy(110, 11); setcolor(0, 0); printf("                              "); }
 		else { M[0].fr++; }
-		if (M[0].n == 0 || Itm.M == 0) {
-			Itm.M = 0; M[0].n = 20;
-		clear_copilot(M[0].x, M[0].y); clear_copilot(M[1].x, M[1].y); 
-		clear_bullet(M[0].x_bullet, M[0].y_bullet);clear_bullet(M[1].x_bullet, M[1].y_bullet); 
+
+
+	}
+	if (M[0].n == 0 || Itm.M == 0) {
+		Itm.M = 0; M[0].n = 20;
+		clear_copilot(M[0].x, M[0].y); clear_copilot(M[1].x, M[1].y);
+		clear_bullet(M[0].x_bullet, M[0].y_bullet); clear_bullet(M[1].x_bullet, M[1].y_bullet);
 		M[0].x = NULL; M[1].x = NULL;
 		M[0].y = NULL; M[1].y = NULL;
-		}
-	
+		gotoxy(110, 11); setcolor(0, 0); printf("                              ");
+
 	}
 
-
-	gotoxy(22, 15); setcolor(5, 0); printf("%d", M[0].n);
+	
 }
