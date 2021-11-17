@@ -373,7 +373,7 @@ int main()
 					gotoxy(45, 35); printf("YOUR NAME IS TOO LONG !!!");
 					 gameover(18, 20);
 				}
-				 
+				Itm.C = 0; Itm.R = 0; Itm.M = 0;
 			}
 			//std::thread q(Beep, 700, 500);
 			//q.detach();
