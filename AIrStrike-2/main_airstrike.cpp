@@ -728,7 +728,7 @@ void Item(int x) {
 		int i = 0;// rand() % 3;
 		
 
-		if (Itm.status == 0&&i==0&&Itm.x>15&&Itm.x<90) {
+		if (Itm.status == 0&&i==0&&Itm.x>25&&Itm.x<80) {
 			Itm.ch = rand() % 4;
 			Itm.status = 1;
 		}
@@ -746,7 +746,7 @@ void Item(int x) {
 				}
 			}
 			}
-			if (Itm.y == p.y) {
+			if (Itm.y == p.y&&Itm.x>p.x&&Itm.x<p.x+4) {
 				if (Itm.ch == 0) { p.shield += h.heal; }
 				if (Itm.ch == 1) { Itm.R = 1; Itm.C = 0; Itm.M = 0; R.n = 0; gotoxy(110, 13);  }
 				if (Itm.ch == 2) { Itm.C = 1; Itm.R = 0; Itm.M = 0; C.n = 20;  }
