@@ -9,6 +9,15 @@
 #include <mutex>
 #include <string.h>
 #include "ScoreBoard.h"
+#define _WIN32_WINNT 0x500
+#define screen_x 75
+#define screen_y 143
+HANDLE wHnd;
+HANDLE rHnd;
+DWORD fdwMode;
+COORD bufferSize = { screen_x,screen_y };
+SMALL_RECT windowSize = { 0,0,screen_x - 1,screen_y - 1 };
+CHAR_INFO consoleBuffer[screen_x * screen_y];
 struct player { int x = 45; int y = 65; int shield = 20; int stbullet[3] = { 0,0,0 }; int x_bullet[3]; int y_bullet[3]; int* bulletform = stbullet; char name[1000]; int ult = 0; };
 struct Aenmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet; int y_bullet; int status; int Fr = 1; int mode = 0; int Fr_b = 1; int drop = 0; int shoot; };
 struct ASenmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet; int y_bullet; int status; int Fr = 1; int mode = 0; int Fr_b = 1; int drop = 0; int shoot; };
