@@ -12,14 +12,18 @@
 #define _WIN32_WINNT 0x500
 #define screen_x 75
 #define screen_y 143
+#define scount 80
+
 HANDLE wHnd;
 HANDLE rHnd;
 DWORD fdwMode;
 COORD bufferSize = { screen_x,screen_y };
 SMALL_RECT windowSize = { 0,0,screen_x - 1,screen_y - 1 };
 CHAR_INFO consoleBuffer[screen_x * screen_y];
+COORD characterPos = { 0,0 };
+struct star { int x; float y; int status=0; int fr=0; }star[80];
 struct player { int x = 45; int y = 65; int shield = 20; int stbullet[3] = { 0,0,0 }; int x_bullet[3]; int y_bullet[3]; int* bulletform = stbullet; char name[1000]; int ult = 0; };
-struct Aenmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet; int y_bullet; int status; int Fr = 1; int mode = 0; int Fr_b = 1; int drop = 0; int shoot; };
+struct Aenmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet; int y_bullet; int status; int Fr = 1; int mode = 0; int Fr_b = 1; int drop = 0; int shoot; int frl = 10; };
 struct ASenmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet; int y_bullet; int status; int Fr = 1; int mode = 0; int Fr_b = 1; int drop = 0; int shoot; };
 struct Benmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet ; int y_bullet ; int status; int Fr = 1; int mode = 0; int Fr_b = 1; int drop = 0; };
 struct Cenmemy { int x; int y; int shield = 5; int stbullet[3] = { 0,0,0 }; int x1_bullet; int y1_bullet; int x2_bullet; int y2_bullet; int x3_bullet; int y3_bullet; int status; int Fr = 1; int mode = 0; int Fr_b[3] = { 1,1,1 };  int drop = 0; int shoot = 0; };
@@ -29,11 +33,12 @@ struct item_Cbullet { int stbullet = 0; int st_bullet[5] = { 0,0,0,0,0 }; int x_
 struct item_copilot { int status = 0; int x; int y; int stbullet = 0; int x_bullet; int y_bullet; int fr=0; int n = 20; };
 struct Healing { int x; int y; int heal = 5; int status = 0; int Fr = 1; }h;
 struct wave { int status = 0; int level = 1; int win = 0; }wave;
+struct boom { int x; int y; int status = 0; int fr = 0; }boom;
 struct enemy_wave { int score[5] = { 100,500,700,900,1100 }; 
-int An[5] = { 5,7,5,5,7 };
-int ASen[5]= { 5,5,5,5,7 };
-int Bn[5] = { 0,1,2,2,2 };
-int Cn[5] = { 0,1,2,3,3 };
+int An[5] = { 0,7,5,5,7 };
+int ASen[5]= { 0,5,5,5,7 };
+int Bn[5] = { 0,2,2,2,2 };
+int Cn[5] = { 3,1,2,3,3 };
 
 }ew;
 player p;
@@ -52,9 +57,11 @@ int score = 0, sheild = 20;
 int pselect = 1;
 int shfr = 0;
 int r = 2, m = 7;
+int boomfr = 0;
 void setcolor(int fg, int bg);
 //void gotoxy(int x, int y);
 void clear_map();
+int setConsole(int x, int y);
 void clear_game();
 void draw_ship(int x, int y);
 void draw_bullet(int x, int y);
@@ -92,28 +99,33 @@ void Cbullet();
 void draw_copilot(int x, int y);
 void copilot();
 void clear_copilot(int x, int y);
-
-
+void clear_kaboom(int x, int y);
+void init_star();
+void star_fall();
+void star_fallll();
+void clear_window();
 std::mutex mtx;
 int main()
 {
+	setConsole(screen_x,screen_y);
 	srand(time(NULL));
 	setcursor(0);
-
+	init_star();
 	gotoxy(14, 4);
 
 	char ch = '.', menselect = '.', s = '.';
-	int  select = 0, mselect = 0;																						// 0=MENU 1=GAMEPLAY 2=SCORE 3=DEV NAME 4=PAUSE 5 =Gameover	
+	int  select = 0, mselect = 1;																						// 0=MENU 1=GAMEPLAY 2=SCORE 3=DEV NAME 4=PAUSE 5 =Gameover	
 
 	do {
+		
 		draw_map();
 		clear_map();
 		while (select == 0) {
+			star_fall();
 
-
-
-			setcolor(2, 0); gotoxy(43, 32); printf("      Start game     ");
-			setcolor(2, 0); gotoxy(43, 33); printf("        score        ");
+			
+			setcolor(2, 0); gotoxy(43, 32); printf("      START GAME    ");
+			setcolor(2, 0); gotoxy(43, 33); printf("        SCORE        ");
 			setcolor(2, 0); gotoxy(43, 34); printf("        EXIT         ");
 			setcolor(7, 0); gotoxy(43, 37); printf("PRESS SPACEBAR TO SELECT");
 			setcolor(3, 0); startgame(15, 20);
@@ -121,20 +133,21 @@ int main()
 				s = _getch();
 				if (s == 's') { if (mselect != 3) { Beep(700, 100); mselect += 1; } }
 				if (s == 'w') { if (mselect != 1) { Beep(700, 100); mselect -= 1; } }
-				if (mselect == 1) { gotoxy(42, 32); setcolor(7, 0); printf(">");  gotoxy(42, 33); printf(" "); gotoxy(42, 34); printf(" "); }
-				if (mselect == 2) { gotoxy(42, 33); setcolor(7, 0); printf(">"); gotoxy(42, 32); printf(" "); gotoxy(42, 34); printf(" "); }
-				if (mselect == 3) { gotoxy(42, 34); setcolor(7, 0); printf(">"); gotoxy(42, 32); printf(" "); gotoxy(42, 33); printf(" "); }
-				if (s == ' ') { select = mselect; Beep(500, 100); Beep(500, 100);  Beep(700, 100);  break; setcolor(10, 0); printf("      ", score); score = 0; Itm.C = 0; Itm.R = 0; Itm.M = 0; }
+
+				if (s == ' ') { select = mselect; Beep(500, 100); Beep(500, 100);  Beep(700, 100);  break; setcolor(10, 0); printf("      ", score); score = 0; }
 				fflush(stdin);
 			}
-
+			if (mselect == 1) { gotoxy(42, 32); setcolor(7, 0); printf(">");  gotoxy(42, 33); printf(" "); gotoxy(42, 34); printf(" "); }
+			if (mselect == 2) { gotoxy(42, 33); setcolor(7, 0); printf(">"); gotoxy(42, 32); printf(" "); gotoxy(42, 34); printf(" "); }
+			if (mselect == 3) { gotoxy(42, 34); setcolor(7, 0); printf(">"); gotoxy(42, 32); printf(" "); gotoxy(42, 33); printf(" "); }
 		}
 		clear_map(); clear_game();
 		//-----------------------------------------------------------------------------------------//GAMEPLA
-		
+		Itm.C = 0; Itm.R = 0; Itm.M = 0;
+		Itm.status = 0;
 		while (select == 1) {
-
-			if (wave.status == 0) { gotoxy(50, 15); setcolor(2, 0); printf("WAVE %d", wave.level); Sleep(2000);  gotoxy(50, 15); printf("         "); wave.status = 1; }
+			star_fall();
+			if (wave.status == 0) {  gotoxy(50, 14); setcolor(2, 0); printf("                             ", wave.level); gotoxy(50, 15); setcolor(2, 0); printf("WAVE %d", wave.level); Sleep(2000);  gotoxy(50, 15); printf("         "); wave.status = 1; }
 			gotoxy(89, 4); setcolor(7, 0); printf("                 ");
 			gotoxy(89, 4); setcolor(7, 0); printf("Score : %d", score);
 			gotoxy(8, 4); setcolor(7, 0);
@@ -218,12 +231,12 @@ int main()
 				}
 
 
-				if (score >= ew.score[wave.level-1]) { wave.status = 2; wave.win++; }
+				if (score >= ew.score[wave.level-1]) { gotoxy(50, 14); setcolor(2, 0); printf("PREPARE FOR WAVE 2"); wave.status = 2; wave.win++; }
 				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
 			}
 			//------------------------------------------------wave2
 			if (wave.level == 2) {
-
+				
 				for (int i = 0; i < ew.ASen[wave.level - 1]; i++)
 				{
 					ASenemy(i);
@@ -232,7 +245,7 @@ int main()
 				for (int i = 0; i < ew.An[wave.level-1]; i++)
 				{
 					Aenemy(i);
-
+					
 				}
 				for (int i = 0; i < ew.Bn[wave.level - 1]; i++)
 				{
@@ -321,7 +334,7 @@ int main()
 				if (score >= ew.score[wave.level - 1]) { wave.status = 2; wave.win++; }
 				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
 			}
-	
+			
 
 			while (select == 4) {
 				
@@ -394,7 +407,7 @@ int main()
 
 
 
-
+		
 
 
 
@@ -456,7 +469,7 @@ void setcursor(bool visible)
 	SetConsoleCursorInfo(console, &lpCursor);
 }
 void draw_map() {
-	setcolor(1, 2);
+	setcolor(1, 7);
 	gotoxy(4, 5);
 	for (int i = 0; i <= 100; i++)
 	{
@@ -521,7 +534,7 @@ void clear_Cenemy(int x, int y) {
 
 
 void draw_kaboom(int x, int y) {
-	int i = y;
+	
 	setcolor(2, 0);
 
 	gotoxy(x, y);   printf("'.\\|/.'");
@@ -529,16 +542,19 @@ void draw_kaboom(int x, int y) {
 	gotoxy(x, y++); printf("- -O- -");
 	gotoxy(x, y++); printf("(/   \\)");
 	gotoxy(x, y++); printf(",'/|\\'.");
+}
 
-	Sleep(1000);
 
-	setcolor(0, 0);
-	gotoxy(x, i);	printf("           ");
-	gotoxy(x, i++); printf("           ");
-	gotoxy(x, i++); printf("           ");
-	gotoxy(x, i++); printf("           ");
-	gotoxy(x, i++); printf("           ");
-	gotoxy(x, i++); printf("           ");
+void clear_kaboom(int x, int y){
+	setcolor(0, 2);
+	gotoxy(x, y);	printf("           ");
+	gotoxy(x, y++); printf("           ");
+	gotoxy(x, y++); printf("           ");
+	gotoxy(x, y++); printf("           ");
+	gotoxy(x, y++); printf("           ");
+	gotoxy(x, y++); printf("           ");
+	
+
 
 }
 void gameover(int x, int y) {
@@ -566,7 +582,7 @@ void gameover(int x, int y) {
 
 }
 void startgame(int x, int y) {
-	setcolor(4, 0);
+	setcolor(12, 0);
 	gotoxy(x, y++); printf(" _______ _________ _______  _______ _________ _______ _________ _        _______ ");
 	gotoxy(x, y++); printf("(  ___  )\\__   __/(  ____ )(  ____ \\\\__   __/(  ____ )\\__   __/| \\    /\\(  ____ \\");
 	gotoxy(x, y++); printf("| (   ) |   ) (   | (    )|| (    \\/   ) (   | (    )|   ) (   |  \\  / /| (    \\/");
@@ -643,11 +659,11 @@ void enem_shoot(int x) {
 }
 void bullet_shoot(int x) {
 	if (p.stbullet[x] == 1) {
-		char bs1 = cursor(p.x_bullet[x], p.y_bullet[x] - 1);
+		
 		clear_bullet(p.x_bullet[x], p.y_bullet[x]);
 
 		if (p.y_bullet[x] == 6) { p.stbullet[x] = 0; }
-		else if (bs1 != ' '&&bs1!='O') { p.stbullet[x] = 0; clear_bullet(p.x_bullet[x], p.y_bullet[x]); }
+	
 		else { draw_bullet(p.x_bullet[x], --p.y_bullet[x]); }
 	}
 }
@@ -676,39 +692,40 @@ void clear_Benemy(int x, int y) {
 
 
 void Cenem_shoot(int x) {
-	if (Cen[x].stbullet[0] == 0) { Cen[x].x1_bullet = Cen[x].x+2; Cen[x].y1_bullet = Cen[x].y+2; Cen[x].stbullet[0] = 1; }
-	clear_bullet(Cen[x].x1_bullet, Cen[x].y1_bullet);
-	if (Cen[x].y1_bullet == 69) { Cen[x].stbullet[0] = 0;  Cen[x].x1_bullet = Cen[x].x; Cen[x].y1_bullet = Cen[x].y; }
-	else {
+	if (Cen[x].shoot == 1 || Cen[x].stbullet[0] == 1) {
+		if (Cen[x].stbullet[0] == 0) { Cen[x].x1_bullet = Cen[x].x + 2; Cen[x].y1_bullet = Cen[x].y + 2; Cen[x].stbullet[0] = 1; }
+		clear_bullet(Cen[x].x1_bullet, Cen[x].y1_bullet);
+		if (Cen[x].y1_bullet == 69) { Cen[x].stbullet[0] = 0;  Cen[x].x1_bullet = Cen[x].x; Cen[x].y1_bullet = Cen[x].y; }
+		else {
 
-		if (Cen[x].Fr_b[0]!= 5) { Cen[x].Fr_b[0]++; draw_enbullet(Cen[x].x1_bullet, Cen[x].y1_bullet); }
+			if (Cen[x].Fr_b[0] != 5) { Cen[x].Fr_b[0]++; draw_enbullet(Cen[x].x1_bullet, Cen[x].y1_bullet); }
 
-		else { draw_enbullet(Cen[x].x1_bullet, ++Cen[x].y1_bullet); Cen[x].Fr_b[0] = 1; }
+			else { draw_enbullet(Cen[x].x1_bullet, ++Cen[x].y1_bullet); Cen[x].Fr_b[0] = 1; }
+		}
 	}
+	if (Cen[x].shoot == 1 || Cen[x].stbullet[1] == 1) {
+		if (Cen[x].stbullet[1] == 0) { Cen[x].x2_bullet = Cen[x].x + 2; Cen[x].y2_bullet = Cen[x].y + 2; Cen[x].stbullet[1] = 1; }
+		clear_bullet(Cen[x].x2_bullet, Cen[x].y2_bullet);
+		if (Cen[x].y2_bullet == 69 || Cen[x].x2_bullet == 103) { Cen[x].stbullet[1] = 0;  Cen[x].x2_bullet = Cen[x].x; Cen[x].y2_bullet = Cen[x].y; }
+		else {
 
+			if (Cen[x].Fr_b[1] != 5) { Cen[x].Fr_b[1]++; draw_enbullet(Cen[x].x2_bullet, Cen[x].y2_bullet); }
 
-	if (Cen[x].stbullet[1] == 0) { Cen[x].x2_bullet = Cen[x].x + 2; Cen[x].y2_bullet = Cen[x].y + 2; Cen[x].stbullet[1] = 1; }
-	clear_bullet(Cen[x].x2_bullet, Cen[x].y2_bullet);
-	if (Cen[x].y2_bullet == 69||Cen[x].x2_bullet == 103) { Cen[x].stbullet[1] = 0;  Cen[x].x2_bullet = Cen[x].x; Cen[x].y2_bullet = Cen[x].y; }
-	else {
-
-		if (Cen[x].Fr_b[1] != 5) { Cen[x].Fr_b[1]++; draw_enbullet(Cen[x].x2_bullet, Cen[x].y2_bullet); }
-
-		else { draw_enbullet(++Cen[x].x2_bullet, ++Cen[x].y2_bullet); Cen[x].Fr_b[1] = 1; }
+			else { draw_enbullet(++Cen[x].x2_bullet, ++Cen[x].y2_bullet); Cen[x].Fr_b[1] = 1; }
+		}
 	}
+	if (Cen[x].shoot == 1 || Cen[x].stbullet[2] == 1) {
+		if (Cen[x].stbullet[2] == 0) { Cen[x].x3_bullet = Cen[x].x + 2; Cen[x].y3_bullet = Cen[x].y + 2; Cen[x].stbullet[2] = 1; }
+		clear_bullet(Cen[x].x3_bullet, Cen[x].y3_bullet);
+		if (Cen[x].y3_bullet == 69 || Cen[x].x3_bullet == 5) { Cen[x].stbullet[2] = 0;  Cen[x].x3_bullet = Cen[x].x; Cen[x].y3_bullet = Cen[x].y; }
+		else {
 
+			if (Cen[x].Fr_b[2] != 5) { Cen[x].Fr_b[2]++; draw_enbullet(Cen[x].x3_bullet, Cen[x].y3_bullet); }
 
-	if (Cen[x].stbullet[2] == 0) { Cen[x].x3_bullet = Cen[x].x + 2; Cen[x].y3_bullet = Cen[x].y + 2; Cen[x].stbullet[2] = 1; }
-	clear_bullet(Cen[x].x3_bullet, Cen[x].y3_bullet);
-	if (Cen[x].y3_bullet == 69 || Cen[x].x3_bullet == 5) { Cen[x].stbullet[2] = 0;  Cen[x].x3_bullet = Cen[x].x; Cen[x].y3_bullet = Cen[x].y; }
-	else {
+			else { draw_enbullet(--Cen[x].x3_bullet, ++Cen[x].y3_bullet); Cen[x].Fr_b[2] = 1; }
+		}
 
-		if (Cen[x].Fr_b[2] != 5) { Cen[x].Fr_b[2]++; draw_enbullet(Cen[x].x3_bullet, Cen[x].y3_bullet); }
-
-		else { draw_enbullet(--Cen[x].x3_bullet, ++Cen[x].y3_bullet); Cen[x].Fr_b[2] = 1; }
 	}
-
-
 
 
 
@@ -734,7 +751,7 @@ void Item(int x) {
 
 	if (x == 1) {
 		
-		int i = 0;// rand() % 3;
+		int i =  rand() % 3;
 		
 
 		if (Itm.status == 0&&i==0&&Itm.x>25&&Itm.x<80) {
@@ -787,7 +804,7 @@ void Aenemy(int x) {
 			clear_enemy(Aen[x].x, Aen[x].y);
 			if (Aen[x].y == 69) { Aen[x].status = 0; }
 			else {
-				if (Aen[x].Fr != 10) { ++Aen[x].Fr; draw_enemy(Aen[x].x, Aen[x].y); }
+				if (Aen[x].Fr != Aen[x].frl) { ++Aen[x].Fr; draw_enemy(Aen[x].x, Aen[x].y); }
 				else {
 					if (Aen[x].x < p.x) { ++Aen[x].x; } if (Aen[x].x > p.x) { --Aen[x].x; }draw_enemy(Aen[x].x, ++Aen[x].y); Aen[x].Fr = 1;
 				}
@@ -801,7 +818,7 @@ void Aenemy(int x) {
 			clear_enemy(Aen[x].x, Aen[x].y);
 			if (Aen[x].y == 69) { Aen[x].status = 0; }
 			else {
-				if (Aen[x].Fr != 10) { ++Aen[x].Fr; draw_enemy(Aen[x].x, Aen[x].y); }
+				if (Aen[x].Fr != Aen[x].frl) { ++Aen[x].Fr; draw_enemy(Aen[x].x, Aen[x].y); }
 				else {
 					draw_enemy(Aen[x].x, ++Aen[x].y); Aen[x].Fr = 1;
 				}
@@ -815,7 +832,7 @@ void Aenemy(int x) {
 			clear_enemy(Aen[x].x, Aen[x].y);
 			if (Aen[x].y == 69) { Aen[x].status = 0; }
 			else {
-				if (Aen[x].Fr != 10) { ++Aen[x].Fr; draw_enemy(Aen[x].x, Aen[x].y); }
+				if (Aen[x].Fr != Aen[x].frl) { ++Aen[x].Fr; draw_enemy(Aen[x].x, Aen[x].y); }
 				else {
 					int i = rand() % 2;
 					if (i == 0) { if (Aen[x].x <= 86) { Aen[x].x++; } }if (i == 1) { if (Aen[x].x >= 10) { Aen[x].x--; } }
@@ -824,7 +841,6 @@ void Aenemy(int x) {
 			}
 		}
 	}
-
 
 
 
@@ -861,9 +877,17 @@ void Aenemy(int x) {
 	if (Aen[x].shield == 0) {
 		Aen[x].drop = 1;
 		if (Itm.status == 0) { Itm.x = Aen[x].x; Itm.y = Aen[x].y; }
-		/*std::thread q(draw_kaboom, Aen[x].x, Aen[x].y); q.detach(); */score += 10; clear_enemy(Aen[x].x, Aen[x].y); Aen[x].status = 0; Aen[x].shield = 3;  Aen[x].x = NULL; Aen[x].y = NULL;
+
+		
+
+
+		score += 10; clear_enemy(Aen[x].x, Aen[x].y); Aen[x].status = 0; Aen[x].shield = 3;  Aen[x].x = NULL; Aen[x].y = NULL;
 	}
+
 	Item(Aen[x].drop); Aen[x].drop = 0;
+	
+
+
 }
 void ASenemy(int x) {
 
@@ -878,7 +902,8 @@ void ASenemy(int x) {
 			clear_enemy(ASn[x].x, ASn[x].y);
 			if (ASn[x].y == 69) { ASn[x].status = 0; }
 			else {
-				if (ASn[x].Fr != 10) { ++ASn[x].Fr; draw_enemy(ASn[x].x, ASn[x].y); ASn[x].shoot = 1;
+				if (ASn[x].Fr != 10) {
+					++ASn[x].Fr; draw_enemy(ASn[x].x, ASn[x].y);
 				}
 				else {
 					if (ASn[x].x < p.x) { ++ASn[x].x; } if (ASn[x].x > p.x) { --ASn[x].x; }draw_enemy(ASn[x].x, ++ASn[x].y); ASn[x].Fr = 1;
@@ -893,7 +918,7 @@ void ASenemy(int x) {
 			clear_enemy(ASn[x].x, ASn[x].y);
 			if (ASn[x].y == 69) { ASn[x].status = 0; }
 			else {
-				if (ASn[x].Fr != 10) { ++ASn[x].Fr; draw_enemy(ASn[x].x, ASn[x].y); ASn[x].shoot = 1;
+				if (ASn[x].Fr != 10) { ++ASn[x].Fr; draw_enemy(ASn[x].x, ASn[x].y); 
 				}
 				else {
 					draw_enemy(ASn[x].x, ++ASn[x].y); ASn[x].Fr = 1;
@@ -908,7 +933,7 @@ void ASenemy(int x) {
 			clear_enemy(ASn[x].x, ASn[x].y);
 			if (ASn[x].y == 69) { ASn[x].status = 0; }
 			else {
-				if (ASn[x].Fr != 10) { ++ASn[x].Fr; draw_enemy(ASn[x].x, ASn[x].y); ASn[x].shoot = 1; }
+				if (ASn[x].Fr != 10) { ++ASn[x].Fr; draw_enemy(ASn[x].x, ASn[x].y); }
 				else {
 					int i = rand() % 2;
 					if (i == 0) { if (ASn[x].x <= 86) { ASn[x].x++; } }if (i == 1) { if (ASn[x].x >= 10) { ASn[x].x--; } }
@@ -960,8 +985,10 @@ void ASenemy(int x) {
 	}
 
 
-	if (ASn[x].shoot == 1) {
+	if (ASn[x].shoot == 1||ASn[x].stbullet==1) {
+
 		if (ASn[x].stbullet == 0) { ASn[x].x_bullet = ASn[x].x; ASn[x].y_bullet = ASn[x].y; ASn[x].stbullet = 1; }
+		if (ASn[x].stbullet == 0 && wave.status == 2) { ASn[x].x_bullet = NULL; ASn[x].y_bullet = NULL; }
 		clear_bullet(ASn[x].x_bullet, ASn[x].y_bullet);
 		if (ASn[x].y_bullet == 69) { ASn[x].stbullet = 0;  ASn[x].x_bullet = ASn[x].x; ASn[x].y_bullet = ASn[x].y; }
 		else {
@@ -970,17 +997,18 @@ void ASenemy(int x) {
 
 			else { draw_enbullet(ASn[x].x_bullet, ++ASn[x].y_bullet); ASn[x].Fr_b = 1; }
 		}
-
+	}
 		if (ASn[x].y_bullet == p.y && ASn[x].x_bullet >= p.x - 3 && ASn[x].x_bullet <= p.x + 4) { p.shield -= 2; std::thread q(Beep, 700, 500); q.detach(); clear_bullet(ASn[x].x_bullet, ASn[x].y_bullet); ASn[x].stbullet = 0; }
-	}
-	if (wave.status == 2) {
-		ASn[x].shoot = 0;   clear_bullet(ASn[x].x_bullet, ASn[x].y_bullet);
-	}
+		
+		
+		if (wave.status == 1) { ASn[x].shoot = 1; }
+		if (wave.status == 2 && ASn[x].status == 0) { ASn[x].shoot = 0; }
+		
 	Item(ASn[x].drop); ASn[x].drop = 0;
 }
 void Benemy(int x) {
 		if (Ben[x].status == 0 && wave.status == 1) {
-			Ben[x].x = 6 + rand() % 80; Ben[x].y = 7 + rand() % 10; draw_Benemy(Ben[x].x, Ben[x].y); Ben[x].status = 1; Ben[x].mode = 1;//+ rand() % 3;
+			Ben[x].x = 6 + rand() % 80; Ben[x].y = 7 + rand() % 10; draw_Benemy(Ben[x].x, Ben[x].y); Ben[x].status = 1; Ben[x].mode = 1;
 		}
 
 
@@ -1106,12 +1134,11 @@ void Cenemy(int x) {
 		/*std::thread q(draw_kaboom, Aen[x].x, Aen[x].y); q.detach(); */score += 30; clear_Cenemy(Cen[x].x, Cen[x].y); Cen[x].shield = 5; Cen[x].status = 0;  Cen[x].x = NULL; Cen[x].y = NULL;
 
 	}
+	if (Cen[x].shoot == 1 || Cen[x].stbullet[0]==1|| Cen[x].stbullet[1]==1|| Cen[x].stbullet[2] == 1) { Cenem_shoot(x); }
+	if (wave.status == 1) { Cen[x].shoot = 1; }
+	if (wave.status == 2 && Cen[x].status == 0) { Cen[x].shoot = 0; }
 
-	if (Cen[x].shoot == 1) { Cenem_shoot(x); }
-	if (wave.status == 2) { Cen[x].shoot = 0;   clear_bullet(Cen[x].x1_bullet, Cen[x].y1_bullet);
-	clear_bullet(Cen[x].x2_bullet, Cen[x].y2_bullet);
-	clear_bullet(Cen[x].x3_bullet, Cen[x].y3_bullet);}
-	Item(Cen[x].drop); Cen[x].drop = 0;
+
 
 
 }
@@ -1321,4 +1348,43 @@ void copilot() {
 	}
 
 	
+}
+int setConsole(int x, int y)
+{
+	wHnd = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleWindowInfo(wHnd, TRUE, &windowSize);
+	SetConsoleScreenBufferSize(wHnd, bufferSize);
+	return 0;
+}
+void init_star() {
+	for (int i = 0; i < 50; i++) {
+
+		star[i].x = 5 + rand() % 99;
+		star[i].y = 6 + rand() % 60;
+
+
+
+	}
+
+}
+void star_fall() {
+
+	for (int i = 0; i < 50; i++) {
+		setcolor(8, 0);
+		gotoxy(star[i].x,star[i].y); printf("*");
+	
+	
+	}
+
+
+}
+void clear_window() {
+	for (int i = 6; i <= 60; i++) {
+		for (int j = 5; i <=104; i++)
+		{
+			gotoxy(i, j); printf(" ");
+		}
+	}
+
+
 }
