@@ -22,7 +22,7 @@ SMALL_RECT windowSize = { 0,0,screen_x - 1,screen_y - 1 };
 CHAR_INFO consoleBuffer[screen_x * screen_y];
 COORD characterPos = { 0,0 };
 struct star { int x; float y; int status=0; int fr=0; }star[80];
-struct player { int x = 45; int y = 65; int shield = 40; int stbullet[3] = { 0,0,0 }; int x_bullet[3]; int y_bullet[3]; int* bulletform = stbullet; char name[1000]; int ult = 0; };
+struct player { int x = 45; int y = 65; int shield = 40; int stbullet[3] = { 0,0,0 }; int x_bullet[3]; int y_bullet[3]; int* bulletform = stbullet; char name[1000]; int color= 11; };
 struct Aenmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet; int y_bullet; int status; int Fr = 1; int mode = 0; int Fr_b = 1; int drop = 0; int shoot; int frl = 10; };
 struct ASenmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet; int y_bullet; int status; int Fr = 1; int mode = 0; int Fr_b = 1; int drop = 0; int shoot; };
 struct Benmemy { int x; int y; int shield = 3; int stbullet = 0; int x_bullet ; int y_bullet ; int status; int Fr = 1; int mode = 0; int Fr_b = 1; int drop = 0; };
@@ -34,11 +34,11 @@ struct item_copilot { int status = 0; int x; int y; int stbullet = 0; int x_bull
 struct Healing { int x; int y; int heal = 5; int status = 0; int Fr = 1; }h;
 struct wave { int status = 0; int level = 1; int win = 0; }wave;
 struct boom { int x; int y; int status = 0; int fr = 0; }boom;
-struct enemy_wave { int score[5] = { 100,500,700,900,1100 }; 
-int An[5] = { 5,7,5,5,7 };
-int ASen[5]= { 5,5,5,5,7 };
-int Bn[5] = { 0,2,2,2,2 };
-int Cn[5] = { 0,1,2,3,3 };
+struct enemy_wave { int score[10] = { 100,500,700,900,1100,1600,2200,3000,4000,0 };
+int An[10] = { 5,7,5,5,7,7,7,5,2,5};
+int ASen[10]={ 5,5,5,5,7,5,6,7,3,4};
+int Bn[10] = { 0,2,2,2,2,3,2,3,4,4 };
+int Cn[10] = { 0,1,2,3,3,3,4,3,3,3 };
 
 }ew;
 player p;
@@ -112,9 +112,13 @@ void R_bar();
 void draw_cbullet(int x, int y);
 void clear_cbullet(int x, int y);
 void clear_bar();
+void changecolor();
+void htplay();
 std::mutex mtx;
 int main()
-{	
+{
+	HWND consoleWindow = GetConsoleWindow();
+	
 	setConsole(screen_x,screen_y);
 	srand(time(NULL));
 	setcursor(0);
@@ -125,13 +129,14 @@ int main()
 	int  select = 0, mselect = 1;																						// 0=MENU 1=GAMEPLAY 2=SCORE 3=DEV NAME 4=PAUSE 5 =Gameover	
 
 	do {
+		setConsole(screen_x, screen_y);
 		draw_frame();
 		draw_map();
 		clear_map();
 		while (select == 0) {
 			star_fall();
-
-			
+			setcolor(7, 0); gotoxy(112, 18); printf("Press J to change color");
+			draw_ship(119, 13);
 			setcolor(2, 0); gotoxy(43, 32); printf("      START GAME    ");
 			setcolor(2, 0); gotoxy(43, 33); printf("        SCORE        ");
 			setcolor(2, 0); gotoxy(43, 34); printf("        EXIT         ");
@@ -141,6 +146,7 @@ int main()
 				s = _getch();
 				if (s == 's') { if (mselect != 3) { Beep(700, 100); mselect += 1; } }
 				if (s == 'w') { if (mselect != 1) { Beep(700, 100); mselect -= 1; } }
+				if (s == 'j') { changecolor(); }
 
 				if (s == ' ') { select = mselect; Beep(500, 100); Beep(500, 100);  Beep(700, 100);  break;  }
 				fflush(stdin);
@@ -149,16 +155,17 @@ int main()
 			if (mselect == 2) { gotoxy(42, 33); setcolor(12, 0); printf(">"); gotoxy(42, 32); printf(" "); gotoxy(42, 34); printf(" "); }
 			if (mselect == 3) { gotoxy(42, 34); setcolor(12, 0); printf(">"); gotoxy(42, 32); printf(" "); gotoxy(42, 33); printf(" "); }
 		}
-		clear_map(); clear_game();
+		clear_map(); clear_game(); setcolor(7, 0); gotoxy(112, 18); printf("                      ");
 		//-----------------------------------------------------------------------------------------//GAMEPLA
 		Itm.C = 0; Itm.R = 0; Itm.M = 0;
 		Itm.status = 0;
 		if (select == 1) { setcolor(10, 0); printf("      ", score); score = 0; }
 		while (select == 1) {
+			
 			dashboard();
 			star_fall();
 			hp_bar();
-			if (wave.status == 0) {  gotoxy(50, 14); setcolor(2, 0); printf("                             ", wave.level); gotoxy(50, 15); setcolor(2, 0); printf("WAVE %d", wave.level); Sleep(2000);  gotoxy(50, 15); printf("         "); wave.status = 1; }
+			if (wave.status == 0) {  gotoxy(45, 14); setcolor(0, 0); printf("                               "); gotoxy(50, 15); setcolor(2, 0); printf("WAVE %d", wave.level); Sleep(2000);  gotoxy(50, 15); printf("         "); wave.status = 1; }
 
 
 
@@ -233,7 +240,8 @@ int main()
 
 
 				if (score >= ew.score[wave.level-1]) { gotoxy(47, 14); setcolor(2, 0); printf("PREPARE FOR WAVE 2"); wave.status = 2; wave.win++; }
-				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
+				if (wave.win == 200) { wave.status = 0; wave.level++; wave.win = 0; }
+				gotoxy(10, 10); printf("%d",wave.win);
 			}
 			//------------------------------------------------wave2
 			if (wave.level == 2) {
@@ -258,7 +266,7 @@ int main()
 					Cenemy(i);
 
 				}
-				if (score >= ew.score[1]) { wave.status = 2; wave.win++; }
+				if (score >= ew.score[1]) { gotoxy(47, 14); setcolor(2, 0); printf("PREPARE FOR WAVE 3"); wave.status = 2; wave.win++; }
 				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
 			}
 			//------------------------------------------------wave3
@@ -284,7 +292,7 @@ int main()
 					Cenemy(i);
 
 				}
-				if (score >= ew.score[2]) { wave.status = 2; wave.win++; }
+				if (score >= ew.score[2]) { gotoxy(47, 14); setcolor(2, 0); printf("PREPARE FOR WAVE 4"); wave.status = 2; wave.win++; }
 				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
 			}
 			//------------------------------------------------wave4
@@ -308,7 +316,7 @@ int main()
 				}
 
 
-				if (score >= ew.score[wave.level - 1]) { wave.status = 2; wave.win++; }
+				if (score >= ew.score[wave.level - 1]) { gotoxy(47, 14); setcolor(2, 0); printf("PREPARE FOR WAVE 5"); wave.status = 2; wave.win++; }
 				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
 			}
 			//------------------------------------------------wave5
@@ -332,10 +340,126 @@ int main()
 				}
 
 
-				if (score >= ew.score[wave.level - 1]) { wave.status = 2; wave.win++; }
+				if (score >= ew.score[wave.level - 1]) { gotoxy(47, 14); setcolor(2, 0); printf("PREPARE FOR WAVE 6"); wave.status = 2; wave.win++; }
 				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
 			}
-			
+			//------------------------------------------------wave6
+			if (wave.level == 5) {
+
+				for (int i = 0; i < ew.ASen[wave.level - 1]; i++)
+				{
+					ASenemy(i);
+				}
+				for (int i = 0; i < ew.An[wave.level - 1]; i++)
+				{
+					Aenemy(i);
+				}
+				for (int i = 0; i < ew.Bn[wave.level - 1]; i++)
+				{
+					Benemy(i);
+				}
+				for (int i = 0; i < ew.Cn[wave.level - 1]; i++)
+				{
+					Cenemy(i);
+				}
+
+
+				if (score >= ew.score[wave.level - 1]) { gotoxy(47, 14); setcolor(2, 0); printf("PREPARE FOR WAVE 7"); wave.status = 2; wave.win++; }
+				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
+			}
+			//------------------------------------------------wave7
+			if (wave.level == 5) {
+
+				for (int i = 0; i < ew.ASen[wave.level - 1]; i++)
+				{
+					ASenemy(i);
+				}
+				for (int i = 0; i < ew.An[wave.level - 1]; i++)
+				{
+					Aenemy(i);
+				}
+				for (int i = 0; i < ew.Bn[wave.level - 1]; i++)
+				{
+					Benemy(i);
+				}
+				for (int i = 0; i < ew.Cn[wave.level - 1]; i++)
+				{
+					Cenemy(i);
+				}
+
+
+				if (score >= ew.score[wave.level - 1]) { gotoxy(47, 14); setcolor(2, 0); printf("PREPARE FOR WAVE 8"); wave.status = 2; wave.win++; }
+				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
+			}
+			//------------------------------------------------wave8
+			if (wave.level == 5) {
+
+				for (int i = 0; i < ew.ASen[wave.level - 1]; i++)
+				{
+					ASenemy(i);
+				}
+				for (int i = 0; i < ew.An[wave.level - 1]; i++)
+				{
+					Aenemy(i);
+				}
+				for (int i = 0; i < ew.Bn[wave.level - 1]; i++)
+				{
+					Benemy(i);
+				}
+				for (int i = 0; i < ew.Cn[wave.level - 1]; i++)
+				{
+					Cenemy(i);
+				}
+
+
+				if (score >= ew.score[wave.level - 1]) { gotoxy(47, 14); setcolor(2, 0); printf("PREPARE FOR WAVE 9"); wave.status = 2; wave.win++; }
+				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
+			}
+			//------------------------------------------------wave9
+			if (wave.level == 5) {
+
+				for (int i = 0; i < ew.ASen[wave.level - 1]; i++)
+				{
+					ASenemy(i);
+				}
+				for (int i = 0; i < ew.An[wave.level - 1]; i++)
+				{
+					Aenemy(i);
+				}
+				for (int i = 0; i < ew.Bn[wave.level - 1]; i++)
+				{
+					Benemy(i);
+				}
+				for (int i = 0; i < ew.Cn[wave.level - 1]; i++)
+				{
+					Cenemy(i);
+				}
+
+
+				if (score >= ew.score[wave.level - 1]) { gotoxy(47, 14); setcolor(2, 0); printf("PREPARE FOR WAVE 10"); wave.status = 2; wave.win++; }
+				if (wave.win == 700) { wave.status = 0; wave.level++; wave.win = 0; }
+			}
+			//------------------------------------------------wave10
+			if (wave.level == 5) {
+
+				for (int i = 0; i < ew.ASen[wave.level - 1]; i++)
+				{
+					ASenemy(i);
+				}
+				for (int i = 0; i < ew.An[wave.level - 1]; i++)
+				{
+					Aenemy(i);
+				}
+				for (int i = 0; i < ew.Bn[wave.level - 1]; i++)
+				{
+					Benemy(i);
+				}
+				for (int i = 0; i < ew.Cn[wave.level - 1]; i++)
+				{
+					Cenemy(i);
+				}
+
+			}
 
 			while (select == 4) {
 				
@@ -397,7 +521,8 @@ int main()
 
 		}
 		while (select == 2) {
-			setcolor(7, 0); gotoxy(51, 28); printf("SCORE"); gotoxy(25, 20); Read(41, 30);; gotoxy(40, 40); printf("PRESS SPACEBAR TO BACK TO MENU ");
+			star_fall();
+			setcolor(12, 0); gotoxy(51, 28); printf("SCORE"); setcolor(15, 0); gotoxy(25, 20); Read(41, 30); setcolor(8, 0); gotoxy(40, 40); printf("PRESS SPACEBAR TO BACK TO MENU ");
 			if (_kbhit()) {
 				char s;
 				s = _getch();
@@ -406,8 +531,8 @@ int main()
 		}
 
 
-
-
+		
+		if(select==3){ PostMessage(GetConsoleWindow(), WM_CLOSE, 0, 0); }
 
 		
 
@@ -427,7 +552,7 @@ void setcolor(int fg, int bg)
 
 void draw_ship(int x, int y)
 {
-	setcolor(11, 0);
+	setcolor(p.color, 0);
 	gotoxy(x, y++); printf("    ^");
 	gotoxy(x, y++); printf("   | |");
 	gotoxy(x, y++); printf("  ||0||");
@@ -722,11 +847,11 @@ void Item(int x) {
 
 	if (x == 1) {
 		
-		int i = 0;// rand() % 3;
+		int i =  rand() % 3;
 		
 
 		if (Itm.status == 0&&i==0&&Itm.x>25&&Itm.x<80) {
-			Itm.ch = 1;// rand() % 4;
+			Itm.ch =  rand() % 4;
 			Itm.status = 1;
 		}
 	}
@@ -772,7 +897,7 @@ void Item(int x) {
 				if (Itm.ch == 1) { Itm.R = 1; Itm.C = 0; Itm.M = 0; R.n = 30;  }
 				if (Itm.ch == 2) { Itm.C = 1; Itm.R = 0; Itm.M = 0; C.n = 30;  }
 				if (Itm.ch == 3) { Itm.C = 0; Itm.R = 0; Itm.M = 1;M[0].n = 30; }
-				if (Itm.ch == 4) { p.ult++; }
+				
 			Itm.status = 0;
 			clear_item(Itm.x, Itm.y); 
 			Itm.x = NULL; Itm.y = NULL;
@@ -1191,18 +1316,11 @@ void Rocket() {
 			if (R.y_bullet == 6) { R.stbullet = 0;  }
 			else { draw_rocket(R.x_bullet, --R.y_bullet); }
 
-		}/*
-		gotoxy(110, 13); setcolor(3, 0); printf("|R|");
-		gotoxy(113, 13); setcolor(3, 0); for (int i = 0; i < 3 - R.n; i++)
-		{
-			printf(" <O> ");
 		}
-		if (R.fr == 20) { R.fr = 0; gotoxy(110, 13); setcolor(0, 0); printf("                                "); }
-		else { R.fr++; }*/
 	}
 	if (R.n == 0 || Itm.R == 0) {
 		Itm.R = 0; R.stbullet = 0; R.n = 0; clear_rocket(R.x_bullet, R.y_bullet); R.y_bullet = NULL; R.x_bullet = NULL;
-		//gotoxy(110, 13); setcolor(0, 0); printf("                            ");
+
 	
 	}
 	if (R.fr == 10) { R.n--; R.fr = 0; }
@@ -1261,16 +1379,6 @@ void Cbullet() {
 
 
 
-		/*
-		gotoxy(110, 10); setcolor(5, 0); printf("|C|");
-		gotoxy(115, 10); setcolor(0, 5); for (int i = 0; i < C.n; i++)
-		{
-			printf(" ");
-		}
-		
-		if (C.fr == 20) { C.n--; C.fr = 0; gotoxy(105, 10); setcolor(5, 0); printf("                              "); }
-		else { C.fr++; }
-	*/
 	}
 	if (C.n == 0 || Itm.C == 0) { Itm.C = 0; C.n = 20;
 	for (int i = 0; i < 5; i++)
@@ -1279,7 +1387,7 @@ void Cbullet() {
 		C.x_bullet[i] = NULL;
 		C.y_bullet[i] = NULL;
 	}
-	// gotoxy(105, 10); setcolor(5, 0); printf("                              "); 
+	
 	
 	}
 
@@ -1397,22 +1505,26 @@ void draw_frame() {
 		gotoxy(105, i); printf("  ");
 		gotoxy(140, i); printf("  ");
 	}
-
+	gotoxy(108, 65); setcolor(7, 0); printf("Name : AFNAN LEEWAN");
+	gotoxy(108, 66); setcolor(7, 0); printf("ID   : 64011011");
+	htplay();
 }
 void dashboard() {
 	gotoxy(127,22); setcolor(7, 0); printf("       ");
 	gotoxy(119,22); setcolor(7, 0); printf("Score : %d", score);
+	gotoxy(127, 23); setcolor(7, 0); printf("       ");
+	gotoxy(119, 23); setcolor(7, 0); printf("Level : %d", wave.level);
 
 	gotoxy(108,25); setcolor(7, 0); printf("SHIELD");
 	gotoxy(108,26);
 
-	draw_ship(119,13);
+	
 
 	if (Itm.R == 1) { draw_rocket(123, 8); Itm.sR = 1; R_bar(); }
 	if (Itm.C == 1) { draw_cbullet(121, 11); Itm.sC = 1; C_bar(); }
 	if (Itm.M == 1) { draw_copilot(110, 14); draw_copilot(131, 14); Itm.sM = 1; M_bar();}
 	if (Itm.R == 0 && Itm.sR == 1) { clear_rocket(123, 8); Itm.sR = 0; clear_cbullet(123, 8); clear_bar();}
-	if (Itm.C == 0 && Itm.sC == 1) { clear_cbullet(123, 8); Itm.sC = 0; clear_bar(); }
+	if (Itm.C == 0 && Itm.sC == 1) { clear_cbullet(121, 11); Itm.sC = 0; clear_bar(); }
 	if (Itm.M == 0&& Itm.sM==1) { clear_copilot(110, 14); clear_copilot(131, 14); Itm.sM = 0; clear_bar(); clear_cbullet(123, 8);
 	}
 
@@ -1469,11 +1581,11 @@ void C_bar()
 	}
 	for (int i = 0; i <= cbar; i++)
 	{
-		setcolor(0, 2);
+		setcolor(0, 10);
 		gotoxy(108 + i, 28); printf(" ");
 	}
 	oldcbar = cbar;
-	gotoxy(10, 10); printf("%d", C.n);
+	
 }
 void clear_bar() {
 	gotoxy(108, 27); printf("    ");
@@ -1496,7 +1608,7 @@ void M_bar()
 	}
 	for (int i = 0; i <= mbar; i++)
 	{
-		setcolor(0, 2);
+		setcolor(0, 11);
 		gotoxy(108 + i, 28); printf(" ");
 	}
 	oldmbar = mbar;
@@ -1520,4 +1632,46 @@ void R_bar() {
 		gotoxy(108 + i, 28); printf(" ");
 	}
 	oldrbar = rbar;
+}
+void changecolor() {
+	switch (p.color)
+	{
+	case 11 :
+		p.color = 12;
+
+		break;
+	case 12:
+		p.color = 9;
+
+		break;
+	case 9:
+		p.color = 15;
+
+		break;
+	case 15:
+		p.color = 11;
+
+		break;
+
+
+
+	}
+
+
+}
+void htplay() {
+	gotoxy(108, 35); printf("HOW TO PLAY :");
+	gotoxy(110, 37); setcolor(0, 7); printf(" W ");
+	gotoxy(108, 38); setcolor(0, 7); printf("A  S  D");
+	gotoxy(117, 38); setcolor(7, 0); printf("Controle your Aircraft");
+	gotoxy(115, 40); setcolor(0, 7); printf(" K ");
+	gotoxy(122, 40); setcolor(7, 0); printf("Shoot");
+	gotoxy(115, 42); setcolor(0, 7); printf(" J ");
+	gotoxy(122, 42); setcolor(7, 0); printf("Use Item");
+	gotoxy(111, 44); setcolor(0, 7); printf(" SpaceBar ");
+	gotoxy(122, 44); setcolor(7, 0); printf("Pause");
+
+
+
+
 }
